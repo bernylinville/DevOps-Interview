@@ -171,19 +171,65 @@ MiB Swap:  0.0/7168.0   [                                                       
 
 ## Python
 
+### 装饰器
+
+* 也是一种函数
+* 可以接受函数作为参数
+* 可以返回函数
+* 接受一个函数，内部对其处理，然后返回一个新函数，动态的增强函数功能
+* 将 c 函数在 a 函数中执行，在 a 函数中可以选择执行或不执行 c 函数，也可以对 c 函数的结果进行二次加工处理
+
+```python
+def out(func_args): # 外围函数
+    def inter(*args, **kwargs): # 内嵌函数
+        return func_args(*args, **kwargs)
+    return inter # 外围函数返回内嵌函数
+
+```
+
+#### 用法
+
+* 将被调用的函数直接作为参数传入装饰器的外围函数括弧
+
+```python
+def a(func):
+    def b(*args, **kwargs):
+        return func(*args, **kwargs)
+    return b
+
+def c(name):
+    print(name)
+
+a(c('berny')) # berny
+
+```
+
+* 将装饰器与被调用函数绑定在一起
+
+@符号 + 装饰器函数放在被调用函数的上一行，被调用的函数正常定义，只需要直接调用被执行函数即可
+
+```python
+@a
+def c(name):
+    print(name)
+
+a(c('berny')) # berny
+
+```
+
 ## Ansible
 
 ## Docker
 
 ## Kubernetes
 
-1. **Kubernetes Components**
+### 1. Kubernetes Components
 
 ![avatar](https://d33wubrfki0l68.cloudfront.net/2475489eaf20163ec0f54ddc1d92aa8d4c87c96b/e7c81/images/docs/components-of-kubernetes.svg)
 
 > [Kubernetes Components](https://kubernetes.io/docs/concepts/overview/components/)
 
-**Control Plane Components**
+#### Control Plane Components
 
 * kube-apiserver
 
@@ -201,7 +247,7 @@ Kubernetes API，集群的统一入口，各组件协调者，以 RESTful API提
 
 处理集群中常规后台任务，一个资源对应一个控制器，而 ControllerManager 就是负责管理这些控制器的。
 
-**Node Components**
+#### Node Components
 
 * kubelet
 
@@ -213,7 +259,7 @@ kubelet 是 Master 在 Node 节点上的 Agent，管理本机运行容器的生�
 
 * Container Runtime
 
-2. **Pod 的生命周期**
+### 2. Pod 的生命周期
 
 > [Pod 的生命周期](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)
 
