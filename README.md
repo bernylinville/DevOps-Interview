@@ -213,7 +213,49 @@ a(c('berny')) # berny
 def c(name):
     print(name)
 
-a(c('berny')) # berny
+c('berny') # berny
+
+```
+
+#### classmethod
+
+* 将类函数可以不经过实例化而直接被调用
+
+```python
+@classmethod
+def func(cls, ...)
+    do
+
+```
+
+```python
+class Test(object):
+    @classmethod
+    def add(cls, a, b)
+        return a + b
+
+Test.add(1, 2)
+
+```
+
+#### staticmethod
+
+* 将类函数可以不经过实例化而直接被调用，被该装饰器调用的函数不许传递 self 或 cls 参数，且无法在该函数内调用其他类函数或类变量
+
+```python
+@staticmethod
+def func(...)
+    do
+
+```
+
+```python
+class Test(object):
+    @staticmethod
+    def add(a, b)
+        return a + b
+
+Test.add(1, 2)
 
 ```
 
