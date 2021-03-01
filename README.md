@@ -231,7 +231,7 @@ def func(cls, ...)
 ```python
 class Test(object):
     @classmethod
-    def add(cls, a, b)
+    def add(cls, a, b):
         return a + b
 
 Test.add(1, 2)
@@ -252,10 +252,56 @@ def func(...)
 ```python
 class Test(object):
     @staticmethod
-    def add(a, b)
+    def add(a, b):
         return a + b
 
 Test.add(1, 2)
+
+```
+
+#### property
+
+将类函数的执行免去括弧，类似于调用属性（变量）
+
+```python
+@property
+def funcself
+    do
+
+```
+
+```python
+class Test(object):
+    def __init__(self, name):
+        self.name = name
+
+    @propperty
+    def call_name(self):
+        return 'hello {}'.format(self.name)
+
+test = Test('berny')
+result = test.call_name
+print(result) # berny
+
+```
+
+```python
+class Test(object):
+    def __init__(self, __name):
+        self.__name = name
+
+    @propperty
+    def name(self):
+        return self.__name
+
+    @name.setter
+    def name(self, value):
+        self.__name = value
+
+test = Test('berny')
+print(test.name) # berny
+test.name = 'test'
+print(test.name) # test
 
 ```
 
