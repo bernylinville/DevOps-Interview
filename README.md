@@ -305,6 +305,66 @@ print(test.name) # test
 
 ```
 
+### 一些类中的函数说明
+
+#### __str__
+
+返回对于该类的描述
+
+```python
+class Test(object):
+    def __str__(self):
+        return '描述'
+
+test = Test()
+print(test) # 描述
+
+```
+
+#### __getattr__
+
+当调用的属性或者方法不存在时，会返回该方法定义的信息
+
+```python
+class Test(object):
+    def __getattr__(self, key):
+        print('key: {}不存在'.format(key))
+
+test = Test()
+test.a
+
+```
+
+#### __setattr__
+
+拦截当前类中不存在的属性与值
+
+```python
+class Test(object):
+    def __setattr__(self, key, value):
+        if key not in self.__dict__:
+            self.__dict__[key] = value
+
+test = Test()
+test.name = 'berny'
+t.name # 'berny'
+
+```
+
+#### __call__
+
+本质是将一个类变成一个函数
+
+```python
+class Test(object):
+    def __call__(self, **kwargs):
+        print('args is {}'.format(kwargs))
+
+test = Test()
+test(name='berny') # args is {'name': 'berny'}
+
+```
+
 ## Ansible
 
 ## Docker
