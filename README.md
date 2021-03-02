@@ -440,7 +440,12 @@ kubelet 是 Master 在 Node 节点上的 Agent，管理本机运行容器的生�
 
 ## Network
 
-### 1. http https 区别
+### 1. HTTP HTTPS 区别
+
+* HTTP 三次握手建立连接
+* HTTPS （三次握手中）客户端请求 HTTPS 连接后，服务器返回证书（公钥），客户端生成随机对称密钥，使用公钥对密钥加密，再发送给服务器加密后的对称密钥，最后两边通过对称密钥加密的密文通信
+* HTTPS 是HTTP 协议的安全版本，HTTP 协议的数据传输是明文的，是不安全的，HTTPS 使用了 SSL/TLS 协议进行了加密处理。
+* HTTP 和 HTTPS 使用连接方式不同，默认端口也不一样，HTTP 是80，HTTPS 是443
 
 ### 2. tcp 三次握手，状态
 
