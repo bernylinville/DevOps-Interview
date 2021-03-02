@@ -380,6 +380,10 @@ test(name='berny') # args is {'name': 'berny'}
 
 ```
 
+### python 有哪些设计模式
+
+[python36种设计模式](https://github.com/ydf0509/python36patterns)
+
 ## Ansible
 
 ## Docker
