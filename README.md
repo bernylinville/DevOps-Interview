@@ -179,6 +179,10 @@ find {{dir}}/ -type f -mtime -7 -exec rm -f {} \;
 
 ```
 
+### 21. ulimit
+
+> core dump ???
+
 ## Python
 
 ### 装饰器
