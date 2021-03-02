@@ -182,6 +182,7 @@ find {{dir}}/ -type f -mtime -7 -exec rm -f {} \;
 ### 21. ulimit
 
 > core dump ???
+> [using_ulimt](https://wiki.archlinux.org/index.php/Core_dump#Using_ulimit)
 
 ## Python
 
