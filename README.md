@@ -169,6 +169,16 @@ MiB Swap:  0.0/7168.0   [                                                       
 18. free
 19. vmstat
 
+### 20. find
+
+```shell
+# 在指定目录删除 7 天之前的文件
+find {{dir}}/ -type f -mtime +7 -exec rm -f {} \;
+# 7 天之内
+find {{dir}}/ -type f -mtime -7 -exec rm -f {} \;
+
+```
+
 ## Python
 
 ### 装饰器
@@ -429,5 +439,9 @@ kubelet 是 Master 在 Node 节点上的 Agent，管理本机运行容器的生�
 ## CI/CD
 
 ## Network
+
+### 1. http https 区别
+
+### 2. tcp 三次握手，状态
 
 ## Monitoring
