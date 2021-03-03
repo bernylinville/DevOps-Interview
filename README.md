@@ -186,6 +186,24 @@ find {{dir}}/ -type f -mtime -7 -exec rm -f {} \;
 
 ## Python
 
+### 常用的内置函数
+
+|函数名|参数|介绍|返回值|举例|
+|-----|---|----|-----|---|
+|abs|Number|返回数字绝对值|正数|abs(-10)|
+|all|List|判断列表内容是否全是 true|Bool|all(['', '123']|
+|help|Object|打印对象的帮助用法|无|help(list)|
+|enumerate|Iterable|迭代时记录索引|无|for index, item in enumerate(list)|
+|input|Str|命令行输入消息|Str|input('请输入信息：')|
+|isinstance|Object, type|判断对象是否是某种类型|Bool|isinstance('a', str)|
+|type|Object|判断对象的类型|Str|type(10)|
+|vars|instance|返回实例化的字典信息|dict||
+|dir|Object|返回对象中所有可用方法和属性|List|dir('type')|
+|hasattr|Obj, key|判断对象中是否有某个属性|Bool|hasttr('1', 'upper')|
+|setattr|Obj, key, value|为实例化对象添加属性与值|无|setattr(instance, 'run', 'go')|
+|getattr|Obj, key|通过对象获取属性|任何类型|getattr(Obj, key)|
+|any|Iterable|判断内容是否有 true 值|Bool|any([1, 0, ''])|
+
 ### 装饰器
 
 * 也是一种函数
