@@ -966,6 +966,27 @@ SMTP
 
 与“三次挥手”一样，在客户端与服务器端传输的TCP报文中，双方的确认号Ack和序号Seq的值，都是在彼此Ack和Seq值的基础上进行计算的，这样做保证了TCP报文传输的连贯性，一旦出现某一方发出的TCP报文丢失，便无法继续”挥手”，以此确保了”四次挥手”的顺利完成。
 
+### 12. TCP连接状态
+
+* LISTEN 监听来自远方的TCP端口的连接请求
+* SYN-SENT 再发送连接请求后等等匹配的连接请求(客户端)
+* SYN-RECEIVED 再收到和发送一个连接请求后等等对方连接请求的确认 (服务器)
+* ESTABLISHED 代表一个打开的连接
+* FIN-WAIT-1 等待远程TCP连接中端请求，或先前的连接中断请求的确认
+* FIN-WAIT-2 从远程TCP等待连接中断请求
+* CLOSING 等待远程TCP对连接中断的确认
+* LAST-ACK 等待原来的发向远程TCP的连接中断请求的确认
+* TIME-WAIT 等待足够的实际以确保远程TCP连接收到中断请求的确认
+* CLOSED 没有任何连接状态
+
+```shell
+# 查看服务器连接
+ss -ant | awk 'NR>1 {++s[$1]} END {for(k in s) print k,s[k]}'
+```
+
+主动端可能出现的状态: FIN_WAIT1、FIN_WAIT2、CLOSING、TIME_WAIT
+被动端可能出现的状态: CLOSE_WAIT LAST_ACK
+
 ## Monitoring
 
 ## Nginx/LVS
