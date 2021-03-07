@@ -3,14 +3,13 @@
 ## Linux
 
 > [TLDR](https://github.com/tldr-pages/tldr)
-
 > [Linux Performance](http://www.brendangregg.com/linuxperf.html)
 
 ![avatar](http://www.brendangregg.com/Perf/linux_observability_tools.png)
 
 ![avatar](http://www.brendangregg.com/BPF/bpf_performance_tools_book.png)
 
-1. sed
+### 1. sed
 
 ```shell
  - Replace the first occurrence of a regular expression in each line of a file, and print the result:
@@ -39,7 +38,7 @@
 
 ```
 
-```
+```shell
 # sed 在第一行添加信息
 sed -i '1i\{{text}}' {{filename}}
 # -i edit files in place
@@ -52,7 +51,7 @@ sed -i '$a\{{text}}' {{filename}}
 
 ```
 
-2. awk
+### 2. awk
 
 ```shell
  - Print the fifth column (a.k.a. field) in a space-separated file:
@@ -81,7 +80,7 @@ sed -i '$a\{{text}}' {{filename}}
 
 ```
 
-3. top
+### 3. top
 
 ```shell
 - Start top:
@@ -152,22 +151,37 @@ MiB Swap:  0.0/7168.0   [                                                       
 
 ```
 
-4. **ps**
-5. netstat
-6. tail
-7. cat
-8. less
-9. df
-10. du
-11. lsof
-12. lspid
-13. dmesg
-14. iotop
-15. pidstat
-16. iostat
-17. mpstat
-18. free
-19. vmstat
+### 4. ps
+
+### 5. netstat
+
+### 6. tail
+
+### 7. cat
+
+### 8. less
+
+### 9. df
+
+### 10. du
+
+### 11. lsof
+
+### 12. lspid
+
+### 13. dmesg
+
+### 14. iotop
+
+### 15. pidstat
+
+### 16. iostat
+
+### 17. mpstat
+
+### 18. free
+
+### 19. vmstat
 
 ### 20. find
 
@@ -188,21 +202,21 @@ find {{dir}}/ -type f -mtime -7 -exec rm -f {} \;
 
 ### 常用的内置函数
 
-|函数名|参数|介绍|返回值|举例|
-|-----|---|----|-----|---|
-|abs|Number|返回数字绝对值|正数|abs(-10)|
-|all|List|判断列表内容是否全是 true|Bool|all(['', '123']|
-|help|Object|打印对象的帮助用法|无|help(list)|
-|enumerate|Iterable|迭代时记录索引|无|for index, item in enumerate(list)|
-|input|Str|命令行输入消息|Str|input('请输入信息：')|
-|isinstance|Object, type|判断对象是否是某种类型|Bool|isinstance('a', str)|
-|type|Object|判断对象的类型|Str|type(10)|
-|vars|instance|返回实例化的字典信息|dict||
-|dir|Object|返回对象中所有可用方法和属性|List|dir('type')|
-|hasattr|Obj, key|判断对象中是否有某个属性|Bool|hasttr('1', 'upper')|
-|setattr|Obj, key, value|为实例化对象添加属性与值|无|setattr(instance, 'run', 'go')|
-|getattr|Obj, key|通过对象获取属性|任何类型|getattr(Obj, key)|
-|any|Iterable|判断内容是否有 true 值|Bool|any([1, 0, ''])|
+| 函数名     | 参数            | 介绍                         | 返回值   | 举例                               |
+| ---------- | --------------- | ---------------------------- | -------- | ---------------------------------- |
+| abs        | Number          | 返回数字绝对值               | 正数     | abs(-10)                           |
+| all        | List            | 判断列表内容是否全是 true    | Bool     | all(['', '123']                    |
+| help       | Object          | 打印对象的帮助用法           | 无       | help(list)                         |
+| enumerate  | Iterable        | 迭代时记录索引               | 无       | for index, item in enumerate(list) |
+| input      | Str             | 命令行输入消息               | Str      | input('请输入信息：')              |
+| isinstance | Object, type    | 判断对象是否是某种类型       | Bool     | isinstance('a', str)               |
+| type       | Object          | 判断对象的类型               | Str      | type(10)                           |
+| vars       | instance        | 返回实例化的字典信息         | dict     |                                    |
+| dir        | Object          | 返回对象中所有可用方法和属性 | List     | dir('type')                        |
+| hasattr    | Obj, key        | 判断对象中是否有某个属性     | Bool     | hasttr('1', 'upper')               |
+| setattr    | Obj, key, value | 为实例化对象添加属性与值     | 无       | setattr(instance, 'run', 'go')     |
+| getattr    | Obj, key        | 通过对象获取属性             | 任何类型 | getattr(Obj, key)                  |
+| any        | Iterable        | 判断内容是否有 true 值       | Bool     | any([1, 0, ''])                    |
 
 ### 装饰器
 
@@ -410,7 +424,7 @@ b = a.copy()
 
 a b 列表内部数据发生变化后，会相互影响
 
-```
+```shell
 In [7]: a = [[1,2,3],[4,5,6]]
 
 In [8]: b = a.copy()
@@ -447,18 +461,25 @@ Out[14]: [[1, 2, 3, 8], [4, 5, 6, 7]]
 
 当你需要一个类除了有生成器的特性之外还要有一些自定义的方法时，可以使用自定义的迭代器，一般来说生成器更方便，更简单。
 
+```python
     def squares(start, stop):
         for i in xrange(start, stop):
             yield i*i
+```
+
 等同于生成器表达式：
 
-    （i*i for i in xrange(start, stop))
+```python
+    （i*i for i in xrange(start, stop))```
+
 列表推倒式是：
 
-    [i*i for i in xrange(start, stop)]
+```python
+    [i*i for i in xrange(start, stop)]```
 
 如果是构建一个自定义的迭代器：
 
+```python
     class Squares(object):
         def __init__(self, start, stop):
             self.start = start
@@ -471,19 +492,27 @@ Out[14]: [[1, 2, 3, 8], [4, 5, 6, 7]]
             current = self.start * self.start
             self.start += 1
             return current
+```
+
 此时，你还可以定义自己的方法如：
 
+```python
     def current(self):
         return self.start
+```
 
 两者的相同点：对象迭代完后就不能重写迭代了。
 
-Iterables, Iterators, Genrators
+#### Iterables, Iterators, Genrators
+
 ==============================
+
 热身一下
+
 --------------
 如果你是来自其它语言比如c，很自然想到的方式是创建一个计数器，然后以自增的方式迭代list。
 
+```python
     my_list = [17  23  47  51  101  173  999  1001]
 
     i = 0
@@ -494,33 +523,42 @@ Iterables, Iterators, Genrators
 输出：
 
     17 23 47 51 101 173 999 1001
+```
 
 也有可能会借用range，写一个类C语言的风格的for循环：
 
+```python
     for i in range(len(my_list)):
         v = my_list[i]
         print v,
 输出：
 
     17 23 47 51 101 173 999 1001
+```
 
 上面两种方法都不是Pythonic方式，取而代之的是：
 
+```python
     for v in my_list:
         print v,
 输出：
 
     17 23 47 51 101 173 999 1001
+```
 
 很多类型的对象都能通过这种方式来迭代，迭代字符串会生成单个字符：
 
+```python
     for v in "Hello":
         print v,
 输出：
 
     H e l l o
+```
+
 迭代字典，生成字典的key（以无序的方式）：
 
+```python
     d = {
         'a': 1,
         'b': 2,
@@ -534,9 +572,11 @@ Iterables, Iterators, Genrators
 输出：
 
     a c b
+```
 
 迭代文件对象，产生字符串行，包括换行符：
 
+```python
     f = open("suzuki.txt")
     for line in f:
         print ">", line
@@ -547,11 +587,13 @@ Iterables, Iterators, Genrators
     > "Education has failed in a very serious way to convey the most important lesson science can teach: skepticism."
 
     > "An educational system isn't worth a great deal if it teaches young people how to make a living but doesn't teach them how to make a life."
+```
 
 以上可以看出列表、元祖、字符串、字典、文件都可以迭代，能被迭代的对象都称为可迭代对象（Iteratbles)，for循环不是唯一接收Iteratbles的东东，还有：
 
 list构造器接收任何类型的Iteratbles，可以使用list()接收字典对象返回只有key的列表：
 
+```python
     list(d)
 输出：
 
@@ -570,24 +612,29 @@ list构造器接收任何类型的Iteratbles，可以使用list()接收字典对
 输出：
 
     [72, 101, 108, 108, 111]
+```
 
 sum()函数接收任何数字类型的可迭代对象:
 
+```python
     sum(ascii)
 
 输出：
 
     500
+```
 
 str.join()方法接收任何字符类型的可迭代对象 （这里的说法不严谨，总之原则是迭代的元素必须是str类型的)：
 
+```python
     "-".join(d)
 输出：
 
     ‘a-c-b'
+```
 
- http://stackoverflow.com/questions/2776829/difference-between-python-generators-vs-iterators
-http://excess.org/article/2013/02/itergen1/
+[difference-between-python-generators-vs-iterators](http://stackoverflow.com/questions/2776829/difference-between-python-generators-vs-iterators)
+[itergen1](http://excess.org/article/2013/02/itergen1/)
 
 ## Ansible
 
@@ -671,3 +718,236 @@ kubelet 是 Master 在 Node 节点上的 Agent，管理本机运行容器的生�
 4. 服务端收到客户端的 ACK，连接已建立，可以数据传输。
 
 ## Monitoring
+
+## Nginx/LVS
+
+### 1. nginx 优化
+
+```shell
+# 隐藏版本号
+server_tokens off;
+# 修改用户和组
+# expires缓存(一般是图片)
+# 日志切割
+# 设置超时时间
+keepalive_timeout   #设置超时时间
+client_header_timeout  #指定请求头的超时时间
+client_body_timeout    #设置请求体超时时间
+* Gzip压缩
+Nginx_http_gzip_module压缩模块提供了对文件压缩的功能，以节约网站的带宽，提高用户的访问体验
+默认Nginx已经安装该模块
+    gzip on    #开启gzip压缩输出
+    gzip_buffers 4 64;   #表示申请了4个单位为64kb的内存作为压缩结果流缓存
+    gzip_http_version 1.1  #用于设置http协议版本
+    gzip_min_length     #设置允许页面的最小字节
+    gzip_vary on;       #让前端的缓存服务器缓存就经过的gzip压缩页面
+* 防盗链
+Nginx防盗链的原理是加入location项，用正则表达式过滤图片类型文件，对于信任的网站可以正常使用，对于不信任的网址则返回相应的错误页面
+     [root@localhost ~]# vim /usr/local/nginx/conf/nginx.conf
+          location ~*.(jpg|gif|swf)$ {
+            valid_referers none blocked *.benet.com benet.com;
+            if ( $invalid_referer ) {
+               rewrite ^/ http://www.benet.com/error.png;
+            }
+         }
+    ~*.(jpg|gif|swf)$: 匹配不区分大小写，以.jpg 或.gif或 .swf结尾的文件。
+    valid_referers：设置信任的网站，可以正常使用图片。
+    none：浏览器中refer为空的情况，就是直接在浏览器访问图片。
+    blocked：浏览器中refer不为空的情况，但是值被代理或防火墙删除了，这些值不以http://或 https://开头。
+    后面的网址或域名：refer包含相关字符串的网址。
+    if语句：如果链接的来源域名不在valid_referers所列出的列表中， $invalid_referer 为1，则执行后面的操作，即进行重写或返回403页面
+
+```
+
+### 2. nginx upsteam 轮询方式
+
+* RR 轮询: 默认的反向代理模式，用以平衡各个服务器的负载，若某个服务器宕机，会自动从轮询中剃掉。同时，可以手动指定某台服务器脱离轮询，用于离线检查
+* weight 权重: 针对服务器性能不通，用来控制服务器被访问的比例，以实现老客户访问时的快速调度
+* ip hash：主要记录了客户端IP访问的目标主机，以实现老用户访问的快速调度
+
+### 3. nginx 跨域
+
+首先我们要知道什么是跨域，跨域指的是浏览器不能执行其他网站的脚本，它是由浏览器的同源策略造成的，是浏览器对JavaScript施加的安全限制
+
+举例:A页面想获取B页面资源，如果a,b页面的协议、端口、域名、子域名不同，所进行的所有访问请求都是跨域的，而浏览器一般为了安全都限制跨域请求，也就是不允许跨域请求资源。注意：跨域其实是浏览器的限制！
+
+```shell
+#如何解决跨域请求？
+Access-Control-Allow-Origin: http://api.bob.com
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: FooBar
+Content-Type: text/html; charset=utf-8
+
+Access-Control-Allow-Origin
+# 这里大概意思是允许跨域的域名，可以写一个域名，或者写* 代表所有
+Access-Control-Allow-Credentials
+# 表示是否允许发送Cookie，默认情况下，Cookie不包括在CORS请求之中。设置为true，表示服务器明确许可，Cookie可以包含在请求中，一起发给服务器，如果服务器不需要浏览器发送的Cookie，删除该字段即可
+Access-Control-Expose-Headers
+# 表示请求头的字段 动态获取
+
+```
+
+### 4. nginx 反向代理和正向代理区别
+
+* 正向代理
+
+正向代理 是一个位于客户端和原始服务器(origin server)之间的服务器，为了从原始服务器取得内容，客户端向代理发送一个请求并指定目标(原始服务器)，然后代理向原始服务器转交请求并将获得的内容返回给客户端。客户端必须要进行一些特别的设置才能使用正向代理。就像要访问google用vpn代理翻墙去访问
+
+* 反向代理
+
+对于客户端而言它就像是原始服务器，并且客户端不需要进行任何特别的设置。客户端向反向代理 的命名空间(name-space)中的内容发送普通请求，接着反向代理将判断向何处(原始服务器)转交请求，并将获得的内容返回给客户端，就像这些内容 原本就是它自己的一样。（用户不知道要访问真正的服务器
+
+#### 以租房为例解释正向代理和反向代理
+
+正向代理 客户端 <一> 代理 一>服务端
+A(客户端)想租C(服务端)的房子,但是A(客户端)并不认识C(服务端)租不到。
+B(代理)认识C(服务端)能租这个房子所以你找了B(代理)帮忙租到了这个房子。
+这个过程中C(服务端)不认识A(客户端)只认识B(代理)
+C(服务端)并不知道A(客户端)租了房子，只知道房子租给了B(代理)。
+
+反向代理 客户端 一>代理 <一> 服务端
+A(客户端)想租一个房子,B(代理)就把这个房子租给了他。
+这时候实际上C(服务端)才是房东。
+B(代理)是中介把这个房子租给了A(客户端)。
+这个过程中A(客户端)并不知道这个房子到底谁才是房东
+他都有可能认为这个房子就是B(代理)的
+
+> 由上的例子我们可以知道正向代理和反向代理的区别在于代理的对象不一样,正向代理的代理对象是客户端,反向代理的代理对象是服务端。
+
+### 5. Nginx 和LVS 区别
+
+1. 高并发连接：官方测试能够支撑5万并发连接，在实际生产环境中跑到2——3万并发连接数。
+2. 内存消耗少：在3万并发连接数下，开启的10个nginx进程才消耗150M内存（150*10=150M）。
+3. 配置文件非常简单：风格跟程序一样通俗易懂。
+4. 成本低廉：nginx为开源软件，可以免费使用。而购买F5 big-ip、netscaler等硬件负载均衡交换机则需要十多万至几十万人民币。
+5. 支持rewrite重写规则：能够根据域名、url的不同，将http请求分到不同的后端服务器群组。
+6. 内置的健康检查功能：如果nginx proxy后端的某台web服务器宕机了，不会影响前端访问。
+7. 节省带宽：支持gzip压缩，可以添加浏览器本地缓存的header头。
+
+### 6. Nginx、LVS、haproxy区别
+
+#### Nginx 优点
+
+* 工作在网络的7层之上，可以针对http应用做一些分流的策略，比如针对域名、目录结构，它的正则规则比HAProxy更为强大和灵活，这也是它目前广泛流行的主要原因之一，Nginx单凭这点可利用的场合就远多于LVS了。
+* Nginx对网络稳定性的依赖非常小，理论上能ping通就就能进行负载功能，这个也是它的优势之一；相反LVS对网络稳定性依赖比较大。
+* Nginx安装和配置比较简单，测试起来比较方便，它基本能把错误用日志打印出来。LVS的配置、测试就要花比较长的时间了，LVS对网络依赖比较大。
+* 可以承担高负载压力且稳定，在硬件不差的情况下一般能支撑几万次的并发量，负载度比LVS相对小些。
+* Nginx可以通过端口检测到服务器内部的故障，比如根据服务器处理网页返回的状态码、超时等等，并且会把返回错误的请求重新提交到另一个节点，不过其中缺点就是不支持url来检测。比如用户正在上传一个文件，而处理该上传的节点刚好在上传过程中出现故障，Nginx会把上传切到另一台服务器重新处理，而LVS就直接断掉了，如果是上传一个很大的文件或者很重要的文件的话，用户可能会因此而不满。
+* Nginx不仅仅是一款优秀的负载均衡器/反向代理软件，它同时也是功能强大的Web应用服务器。LNMP也是近几年非常流行的web架构，在高流量的环境中稳定性也很好。
+* Nginx现在作为Web反向加速缓存越来越成熟了，速度比传统的Squid服务器更快，可以考虑用其作为反向代理加速器。
+* Nginx可作为中层反向代理使用，这一层面Nginx基本上无对手，唯一可以对比Nginx的就只有 lighttpd了，不过 lighttpd目前还没有做到Nginx完全的功能，配置也不那么清晰易读，社区资料也远远没Nginx活跃。
+* Nginx也可作为静态网页和图片服务器，这方面的性能也无对手。还有Nginx社区非常活跃，第三方模块也很多。
+
+#### Nginx 缺点
+
+Nginx仅能支持http、https和Email协议，这样就在适用范围上面小些，这个是它的缺点。
+对后端服务器的健康检查，只支持通过端口来检测，不支持通过url来检测。不支持Session的直接保持，但能通过ip_hash来解决。
+
+#### LVS 优点
+
+* 抗负载能力强、是工作在网络4层之上仅作分发之用，没有流量的产生，这个特点也决定了它在负载均衡软件里的性能最强的，对内存和cpu资源消耗比较低。
+* 配置性比较低，这是一个缺点也是一个优点，因为没有可太多配置的东西，所以并不需要太多接触，大大减少了人为出错的几率。
+* 工作稳定，因为其本身抗负载能力很强，自身有完整的双机热备方案，如LVS+Keepalived。
+* 无流量，LVS只分发请求，而流量并不从它本身出去，这点保证了均衡器IO的性能不会受到大流量的影响。
+* 应用范围比较广，因为LVS工作在4层，所以它几乎可以对所有应用做负载均衡，包括http、数据库、在线聊天室等等。
+
+#### LVS 缺点
+
+* 软件本身不支持正则表达式处理，不能做动静分离；而现在许多网站在这方面都有较强的需求，这个是Nginx/HAProxy+Keepalived的优势所在。
+* 如果是网站应用比较庞大的话，LVS/DR+Keepalived实施起来就比较复杂了，特别后面有 Windows Server的机器的话，如果实施及配置还有维护过程就比较复杂了，相对而言，Nginx/HAProxy+Keepalived就简单多了。
+
+#### HAProxy优点
+
+* HAProxy也是支持虚拟主机的。
+* HAProxy的优点能够补充Nginx的一些缺点，比如支持Session的保持，Cookie的引导；同时支持通过获取指定的url来检测后端服务器的状态。
+* HAProxy跟LVS类似，本身就只是一款负载均衡软件；单纯从效率上来讲HAProxy会比Nginx有更出色的负载均衡速度，在并发处理上也是优于Nginx的。
+* HAProxy支持TCP协议的负载均衡转发，可以对MySQL读进行负载均衡，对后端的MySQL节点进行检测和负载均衡，大家可以用LVS+Keepalived对MySQL主从做负载均衡。
+* HAProxy负载均衡策略非常多，HAProxy的负载均衡算法现在具体有如下8种：
+  * roundrobin，表示简单的轮询，这个不多说，这个是负载均衡基本都具备的；
+  * static-rr，表示根据权重，建议关注；
+  * leastconn，表示最少连接者先处理，建议关注；
+  * source，表示根据请求源IP，这个跟Nginx的IP_hash机制类似，我们用其作为解决session问题的一种方法，建议关注；
+  * ri，表示根据请求的URI；
+  * rl_param，表示根据请求的URl参数’balance url_param’ requires an URL parameter name；
+  * hdr(name)，表示根据HTTP请求头来锁定每一次HTTP请求；
+  * rdp-cookie(name)，表示根据据cookie(name)来锁定并哈希每一次TCP请求。
+
+### 7. LVS 几种模式
+
+1. DR模型 -- （Director Routing-直接路由）
+2. NAT模型 -- (NetWork Address Translation-网络地址转换)
+3. fullNAT -- （full NAT，双向数据包都进行SNAT与DNAT）
+4. ENAT --（enhence NAT 或者叫三角模式/DNAT）
+5. IP TUN模型 -- (IP Tunneling - IP隧道)
+
+### 8. LVS负载均衡调度算法
+
+* 轮询调度
+
+轮询调度（Round Robin 简称’RR’）算法就是按依次循环的方式将请求调度到不同的服务器上，该算法最大的特点就是实现简单。轮询算法假设所有的服务器处理请求的能力都一样的，调度器会将所有的请求平均分配给每个真实服务器。
+
+* 加权轮询调度
+
+加权轮询（Weight Round Robin 简称’WRR’）算法主要是对轮询算法的一种优化与补充，LVS会考虑每台服务器的性能，并给每台服务器添加一个权值，如果服务器A的权值为1，服务器B的权值为2，则调度器调度到服务器B的请求会是服务器A的两倍。权值越高的服务器，处理的请求越多。
+
+* 最小连接调度
+
+最小连接调度（Least Connections 简称’LC’）算法是把新的连接请求分配到当前连接数最小的服务器。最小连接调度是一种动态的调度算法，它通过服务器当前活跃的连接数来估计服务器的情况。调度器需要记录各个服务器已建立连接的数目，当一个请求被调度到某台服务器，其连接数加1；当连接中断或者超时，其连接数减1。
+
+（集群系统的真实服务器具有相近的系统性能，采用最小连接调度算法可以比较好地均衡负载。)
+
+* 加权最小连接调度
+
+加权最少连接（Weight Least Connections 简称’WLC’）算法是最小连接调度的超集，各个服务器相应的权值表示其处理性能。服务器的缺省权值为1，系统管理员可以动态地设置服务器的权值。加权最小连接调度在调度新连接时尽可能使服务器的已建立连接数和其权值成比例。调度器可以自动问询真实服务器的负载情况，并动态地调整其权值。
+
+* 基于局部的最少连接
+
+基于局部的最少连接调度（Locality-Based Least Connections 简称’LBLC’）算法是针对请求报文的目标IP地址的 负载均衡调度，目前主要用于Cache集群系统，因为在Cache集群客户请求报文的目标IP地址是变化的。这里假设任何后端服务器都可以处理任一请求，算法的设计目标是在服务器的负载基本平衡情况下，将相同目标IP地址的请求调度到同一台服务器，来提高各台服务器的访问局部性和Cache命中率，从而提升整个集群系统的处理能力。LBLC调度算法先根据请求的目标IP地址找出该目标IP地址最近使用的服务器，若该服务器是可用的且没有超载，将请求发送到该服务器；若服务器不存在，或者该服务器超载且有服务器处于一半的工作负载，则使用’最少连接’的原则选出一个可用的服务器，将请求发送到服务器。
+
+* 带复制的基于局部性的最少连接
+
+带复制的基于局部性的最少连接（Locality-Based Least Connections with Replication 简称’LBLCR’）算法也是针对目标IP地址的负载均衡，目前主要用于Cache集群系统，它与LBLC算法不同之处是它要维护从一个目标IP地址到一组服务器的映射，而LBLC算法维护从一个目标IP地址到一台服务器的映射。按’最小连接’原则从该服务器组中选出一一台服务器，若服务器没有超载，将请求发送到该服务器；若服务器超载，则按’最小连接’原则从整个集群中选出一台服务器，将该服务器加入到这个服务器组中，将请求发送到该服务器。同时，当该服务器组有一段时间没有被修改，将最忙的服务器从服务器组中删除，以降低复制的程度。
+
+* 目标地址散列调度
+
+目标地址散列调度（Destination Hashing 简称’DH’）算法先根据请求的目标IP地址，作为散列键（Hash Key）从静态分配的散列表找出对应的服务器，若该服务器是可用的且并未超载，将请求发送到该服务器，否则返回空。
+
+* 源地址散列调度U
+
+源地址散列调度（Source Hashing 简称’SH’）算法先根据请求的源IP地址，作为散列键（Hash Key）从静态分配的散列表找出对应的服务器，若该服务器是可用的且并未超载，将请求发送到该服务器，否则返回空。它采用的散列函数与目标地址散列调度算法的相同，它的算法流程与目标地址散列调度算法的基本相似。
+
+* 最短的期望的延迟
+
+最短的期望的延迟调度（Shortest Expected Delay 简称’SED’）算法基于WLC算法。举个例子吧，ABC三台服务器的权重分别为1、2、3 。那么如果使用WLC算法的话一个新请求进入时它可能会分给ABC中的任意一个。使用SED算法后会进行一个运算
+
+A：（1+1）/1=2 B：（1+2）/2=3/2 C：（1+3）/3=4/3 就把请求交给得出运算结果最小的服务器。
+
+* 最少队列调度
+
+最少队列调度（Never Queue 简称’NQ’）算法，无需队列。如果有realserver的连接数等于0就直接分配过去，不需要在进行SED运算。
+
+### 9. Nginx 调度算法
+
+* 轮询 rr
+按时间顺序逐一分配到不同的后端服务器
+
+* 加权轮询 wrr
+在nginx server后面配置权重，权重越高分配的概率越大
+
+* ip_hash
+每个请求按访问IP的hash分配，这样来自同一IP固定访问一个后端服务器
+
+* least_hash
+最少连接数，哪个机器连接数少就发给哪台机器
+
+* url_hash
+按访问的url的hash结果分配请求，是每个url定向到同一后端服务器上
+
+* hash关键值
+自定义hash的key
+
+> 注: 调度算法在设置upstream中配置，例如在此大括号里写如ip_hash表示使用ip_hash的方式
+> 1.轮询只是简单实现请求的顺序转发，并没有考虑不同服务器的性能差异；
+> 2.加权轮询设置了初始时服务器的全站，但是没有考虑运行过程中的服务器状态
+> 3.IP Hash保证同一客户端请求转发到同一后台服务器实现了session保存，然而当某一后台服务器发生故障时，某些客户端将访问失败；
+> 4.最少连接数只是考虑了后端服务器的连接数情况，并没有完全考虑服务器的整体性能
