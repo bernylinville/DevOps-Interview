@@ -264,6 +264,30 @@ find {{dir}}/ -type f -mtime -7 -exec rm -f {} \;
 * 阻塞/非阻塞: 关注的是请求在等待结果时的状态，描述的是调用方。 阻塞就是在等待结果的时候，当前线程会被挂起，在得到结果之后返回；非阻塞则是没有得到结果之前也不会阻塞当前线程
 例子: 阻塞的情况就是卖咖啡的时候什么都不能做，只能挂起；非阻塞的时候就是在等咖啡的时候可以玩着手机，过一会检查咖啡是否好了
 
+### 2. shell $ 解释
+
+```shell
+$$ 
+Shell本身的PID（ProcessID） 
+$! 
+Shell最后运行的后台Process的PID 
+$? 
+最后运行的命令的结束代码（返回值） 
+$- 
+使用Set命令设定的Flag一览 
+$* 
+所有参数列表。如"$*"用「"」括起来的情况、以"$1 $2 … $n"的形式输出所有参数。 
+$@ 
+所有参数列表。如"$@"用「"」括起来的情况、以"$1" "$2" … "$n" 的形式输出所有参数。 
+$# 
+添加到Shell的参数个数 
+$0 
+Shell本身的文件名 
+$1～$n 
+添加到Shell的各参数值。$1是第1参数、$2是第2参数…。
+# 在脚本中添加set -x可以进行每一行的调试
+```
+
 ## Python
 
 ### 常用的内置函数
@@ -706,6 +730,84 @@ str.join()方法接收任何字符类型的可迭代对象 （这里的说法不
 
 ## Docker
 
+### 1. Dockerfile 中 add copy 区别
+
+COPY 指令将从构建上下文目录中 <源路径> 的文件/目录复制到新的一层的镜像内的 <目标路径> 位置。
+
+```shell
+COPY abcdocker.json /usr/src/app/
+```
+
+ADD指令不仅能够将构建命令所在的主机本地的文件或目录，而且能够将远程URL所对应的文件或目录，作为资源复制到镜像文件系统。
+所以，可以认为ADD是增强版的COPY，支持将远程URL的资源加入到镜像的文件系统。
+
+### 2. docker 网络模式
+
+* host模式，使用```—net=host```指定。
+* container模式，使用```—net=container:NAME_or_ID```指定。
+* none模式，使用```—net=none```指定。
+* bridge模式，使用```—net=bridge```指定，默认设置。
+
+* host模式
+
+Docker使用的网络实际上和宿主机一样，在容器内看到的网卡ip是宿主机上的ip。
+
+众所周知，Docker使用了Linux的Namespaces技术来进行资源隔离，如PID Namespace隔离进程，Mount Namespace隔离文件系统，Network Namespace隔离网络等。一个Network Namespace提供了一份独立的网络环境，包括网卡、路由、Iptable规则等都与其他的Network Namespace隔离。一个Docker容器一般会分配一个独立的Network Namespace。但如果启动容器的时候使用host模式，那么这个容器将不会获得一个独立的Network Namespace，而是和宿主机共用一个Network Namespace。容器将不会虚拟出自己的网卡，配置自己的IP等，而是使用宿主机的IP和端口。
+
+* container模式
+
+多个容器使用共同的网络看到的ip是一样的。
+
+在理解了host模式后，这个模式也就好理解了。这个模式指定新创建的容器和已经存在的一个容器共享一个Network Namespace，而不是和宿主机共享。新创建的容器不会创建自己的网卡，配置自己的IP，而是和一个指定的容器共享IP、端口范围等。同样，两个容器除了网络方面，其他的如文件系统、进程列表等还是隔离的。两个容器的进程可以通过lo网卡设备通信。
+
+* none模式
+
+这种模式下不会配置任何网络。
+
+这个模式和前两个不同。在这种模式下，Docker容器拥有自己的Network Namespace，但是，并不为Docker容器进行任何网络配置。也就是说，这个Docker容器没有网卡、IP、路由等信息。需要我们自己为Docker容器添加网卡、配置IP等。
+
+* bridge模式
+
+bridge模式是Docker默认的网络设置，此模式会为每一个容器分配Network Namespace、设置IP等，并将一个主机上的Docker容器连接到一个虚拟网桥上。
+
+类似于Vmware的nat网络模式。同一个宿主机上的所有容器会在同一个网段下，相互之间是可以通信的。
+
+### 3. docker 存储引擎
+
+Docker最开始采用AUFS作为文件系统，也得益于AUFS分层的概念，实现了多个Container可以共享一个image。但是由于AUFS未并入Linux内核，且只支持Ubuntu，考虑到兼容性问题，在Docker 0.7 版本中引入了存储驱动，目前，Docker支持AUFS、Btrfs、Devicemapper、OverlayFS、ZFS五种存储驱动。
+
+* 写时复制 (CoW)
+
+所有驱动都用到的技术————写时复制，Cow全称copy-on-write，表示只是在需要写时才去复制，这个是针对已有文件的修改场景。比如基于一个image启动多个Container，如果每个Container都去分配一个image一样的文件系统，那么将会占用大量的磁盘空间。而CoW技术可以让所有的容器共享image的文件系统，所有数据都从image中读取，只有当要对文件进行写操作时，才从image里把要写的文件复制到自己的文件系统进行修改。所以无论有多少个容器共享一个image，所做的写操作都是对从image中复制到自己的文件系统的副本上进行，并不会修改image的源文件，且多个容器操作同一个文件，会在每个容器的文件系统里生成一个副本，每个容器修改的都是自己的副本，互相隔离，互不影响。使用CoW可以有效的提高磁盘的利用率。
+
+* 用时分配 （allocate-on-demand）
+
+用时分配是用在原本没有这个文件的场景，只有在要新写入一个文件时才分配空间，这样可以提高存储资源的利用率。比如启动一个容器，并不会因为这个容器分配一些磁盘空间，而是当有新文件写入时，才按需分配新空间。
+
+#### 存储引擎介绍
+
+* AUFS
+
+AUFS (AnotherUnionFS)是一种UnionFS，是文件级的存储驱动。AUFS能透明覆盖一或多个现有文件系统的层状文件系统，把多层合并成文件系统的单层表示。简单来说就是支持将不同目录挂载到同一个虚拟文件下的文件系统。这种文件系统可以一层一层地叠加修改文件。无论底下有多少层都是只读的，只有最上层的文件系统是可写的。当需要修改一个文件时，AUFS创建该文件的一个副本，使用CoW将文件从只读层复制到可写层进行修改，结果也保存在科协层。在Docker中，只读层就是image，可写层就是Container
+
+* OverlayFS
+
+OverlayFS是一种和AUFS很类似的文件系统，与AUFS相比，OverlayFS有以下特性；
+
+1. 更简单地设计;
+2. 从Linux 3.18开始，就加入了Linux内核主线;
+3. 速度更快
+
+因此，OverlayFS在Docker社区关注提高很快，被很多人认为是AUFS的继承者。Docker的overlay存储驱动利用了很多OverlayFS特性来构建和管理镜像与容器的磁盘结构
+
+从Docker1.12起，Docker也支持overlay2存储驱动，相比于overlay来说，overlay2在inode优化上更加高效，但overlay2驱动只兼容Linux kernel4.0以上的版本
+
+注意: 自从OverlayFS加入kernel主线后，它的kernel模块中的名称就从overlayfs改为overlay了
+
+* OverlayFS （overlay2）镜像分层与共享
+
+overlay驱动只工作在一个lower OverlayFS层之上，因此需要硬链接来实现多层镜像，但overlay2驱动原生地支持多层lower OverlayFS镜像(最多128层)。因此overlay2驱动在合层相关的命令(如build何commit)中提供了更好的性能，与overlay驱动对比，减少了inode消耗
+
 ## Kubernetes
 
 ### 1. Kubernetes Components
@@ -744,6 +846,31 @@ kubelet 是 Master 在 Node 节点上的 Agent，管理本机运行容器的生�
 
 * Container Runtime
 
+#### 核心概念
+
+```
+Pod
+Pod是若干相关容器的组合，Pod包含的容器运行在同一台宿主机上，这些容器使用相同的网络命名空间、IP地址和端口，相互之间能通过localhost来发现和通信。另外这些容器可以共享一块存储卷空间。在kubernetes中创建、调度和管理的最小单位是Pod，而不是容器，Pod通过提供更高层次的抽象，提供了更加灵活的部署和管理模式
+RC
+Replication Controller用来管理控制Pod副本（Replica，或者称为实例）Replication Controller确保任何时候kubernetes集群中有指定数量的Pod副本在运行。如果少于指定数量的副本，Replication Controller会启动新的Pod副本，反之会杀死多余的副本以保证数量不变，另外Replication Controller是弹性伸缩、滚动升级的实现核心
+Service
+Service 是真实应用服务的抽象，定义了Pod的逻辑集合和访问Pod集合的策略。Service将代理Pod对外表现为一个单一访问接口，外部不需要了解后端Pod如何运行，并且提供了一套简化的服务代理和发现机制。
+Label
+Label 是用于区分Pod、Service、Replication Controller的Key/Value对，实际上，kubernetes中的任意API对象都可以通过label进行标示。每个API对象可以有多个label，但是每个label的KEY只能对应一个value。label是service和replication Controller运行的基础，他们通过label来关系Pod，相比于强绑定模型，这是一种非常友好的耦合关系
+Node
+kubernetes属于主从分布式集群架构，kubernetes NODE (简称为Node，早期版本叫做Minion)运行并管理容器。 Node操作Kubernetes的操作单元，用来分配Pod，Pod最终运行在Node上，node可以认为是Pod的宿主机
+kube-apiserver
+作为kubernetes 系统的入口，其封装了核心对象的增删改查操作，以REST API接口方式提供给外部客户和内部组件调用，它维护的REST对象将持久化到ETCD中
+kube-scheduler
+负责集群的资源调度，为新建的Pod分配机器
+kube-controller-manager
+负责执行各个控制器，目前已经实现很多控制器来保证kubernetes的正常运行（主要是rc node service deployment等）
+kubelet
+负责管控容器，kubelet会从kubernetes API Server接收Pod的创建请求，启动和停止容器，监控容器运行状态并汇报给kubernetes API Server
+Kubernetes Proxy
+负责为Pod创建代理服务，kubernetes proxy会从kubernetes API Server获取所有的service，并根据Service信息创建代理服务，实现Service到Pod的请求和路由转发，从而实现Kubernetes层级的虚拟转发网络
+```
+
 ### 2. Pod 的生命周期
 
 > [Pod 的生命周期](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)
@@ -762,6 +889,105 @@ kubelet 是 Master 在 Node 节点上的 Agent，管理本机运行容器的生�
   * readinessProbe：指示容器是否准备好为请求提供服务。如果就绪态探测失败， 端点控制器将从与 Pod 匹配的所有服务的端点列表中删除该 Pod 的 IP 地址。 初始延迟之前的就绪态的状态值默认为 Failure。 如果容器不提供就绪态探针，则默认状态为 Success。
   * startupProbe: 指示容器中的应用是否已经启动。如果提供了启动探针，则所有其他探针都会被 禁用，直到此探针成功为止。如果启动探测失败，kubelet 将杀死容器，而容器依其 重启策略进行重启。 如果容器没有提供启动探测，则默认状态为 Success。
 * Pod 的终止： 由于 Pod 所代表的是在集群中节点上运行的进程，当不再需要这些进程时允许其体面地 终止是很重要的。一般不应武断地使用 KILL 信号终止它们，导致这些进程没有机会 完成清理操作。
+
+#### 面试回答
+
+```
+首先Pod被创建，紧接着Pod被调度到Node进行部署运行，一旦被分配到Node后，就不会离开这个Node，直到它被删除，生命周期完结
+Pod声明周期有以下几个阶段
+Pending: Pod已经被创建，但是一个或者多个容器还未创建，包括Pod调度阶段，以及容器镜像的下载过程
+Running: Pod已经被调度到Node，所有容器已经创建，并且至少有一个容器在运行或者正在容器
+Succeeded: Pod中所有所有容器正常退出
+Failed: Pod中所有容器退出，至少有一个容器是一次退出的
+```
+### 3. pod 重启策略
+
+```
+Pod重启策略指的是当Pod中的容器停止退出后，重启容器的策略。
+重启策略是通过Pod定义中的.spec.restartPolicy进行设置，支持一下三种策略
+always  当容器停止退出后，总是从启容器，默认策略
+OnFailure  当容器终止异常退出(非0时)，才重启容器
+Never   当容器终止退出时，从不重启容器
+Pod是Running状态，包含一个容器，容器正常退出；
+如果重启策略是Always，那么会重启容器，Pod保持running状态
+如果重启策略是OnFailure，Pod进入Successded阶段
+如果重启策略是never，Pod进入Succeeded
+Pod是Running阶段，含有一个容器，容器异常退出；
+如果重启策略是Always，那么会重启容器，Pod保持Running阶段
+如果重启策略是OnFailure，Pod保持Running阶段
+如果重启策略是Never，Pod进入Failed阶段
+Pod是Running阶段，含有2个容器，其中一个异常退出；
+如果重启策略是Always，那么会重启容器，Pod保持running阶段
+如果重启策略是OnFailure，Pod保持running阶段
+如果重启策略是Never，Pod保持running阶段
+Pod是Running阶段，含有2个容器，2个容器都异常退出；
+如果重启策略是Always，那么会重启容器，Pod保持running阶段
+如果重启策略是OnFailure，Pod保持running阶段
+如果重启策略是Never，Pod进入Failed阶段
+```
+
+### 4. k8s 生命周期和回调函数
+
+```
+kubernetes提供了回调函数，在容器的生命周期的特定阶段执行调用，比如容器在停止前系统执行某项操作，就可以注册相应的钩子函数。目前提供的生命周期回调函数如下
+PostStart  在容器创建成功后调用该回调函数
+PreStop    在容器被终止前调用该回调函数
+```
+
+### 5. k8s flannel 通信原理
+
+```
+数据从源容器中出发后，经由所在主机的docker0虚拟网卡转发到flannel0虚拟网卡上，flannel服务监听在网卡的另一端。 Flannel通过ETCD服务维护了一张节点间的路由表，详细记录了各节点的子网网段
+源主机的flanneld服务奖原本的数据包内容UDP封装后根据自己的路由表传递给目的节点的flannel服务，数据到达以后被解包，然后直接进入目的节点的flannel0虚拟网卡，然后被转发到目的主机的docker0虚拟网卡，最后就像本机容器通信一样，私用docker0路由到达目的容器
+docker需要配置bip的一个配置引用
+```
+
+### 6. k8s 拉取镜像策略
+
+```
+always 每次都下载最新的镜像
+never  只使用本地镜像，从不下载
+ifNotPresent 只有当本地没有的时候才下载镜像
+```
+
+### 7. 自定义检查Pod
+
+```
+Liveness Probe 用于容器的自定义健康检查，如果Liveness Probe检查失败，kubernetes将杀死容器，然后根据Pod的重启策略来决定是否重启容器
+Readiness Probe 用于容器的自定义准备状况检查，如果Readiness Probe检查失败，Kubernetes将会把Pod从服务代理的分发后端移除，即不会分发请求给该Pod
+Probe支持以下三种健康检查
+ExecAction  在容器中执行检查的命令，当命令执行成功(返回码为0)则检查成功
+TCPSocketAction  对于容器中的指定TCP端口进行检查，当TCP端口被占用，检查成功
+HTTPGetAction  发生一个HTTP请求，当返回码介于200-400之间，则检查成功
+```
+
+### 8. Pod与容器
+
+```
+在Docker中，容器是最小处理单位，增删改查的对象是容器，容器是一种虚拟化技术，容器之间是隔离的，隔离是基于Linux Namespace实现的， Pod包含一个或多个相关容器，Pod可以认为是容器的一种延伸扩展，一个Pod也是隔离体，而Pod包含的一组容器又是共享的(当前共享的Linux Namespace包含PID、Network、IPC(消息队列和内存)和UTS（主机与域名）)。Pod中的容器可以访问相同的数据卷来实现文件系统的共享，所以kubernetes中国的数据卷是Pod级别的，而不是容器级别的
+这样的设计有以下好处
+1.透明性:将Pod内的容器向基础设施可见，底层系统能向容器提供如进程管理和资源监控等服务，这样能给用户带来极大便利
+2.解绑软件的依赖: 这样但个容器可以独立的重建和重新部署，可以实现独立容器的实时更新
+3.易用性: 用户不需要运行自己的进程管理器，也不需要负责信号量和退出码的传递等。
+4.高效性: 因为底层设备负责更多的管理，容器因而能更轻量化
+```
+
+### 9. kube-proxy原理
+
+kube-proxy是Kubernetes的核心组件，部署在每个Node节点上，它是实现Kubernetes Service的通信与负载均衡机制的重要组件; kube-proxy负责为Pod创建代理服务，从apiserver获取所有server信息，并根据server信息创建代理服务，实现server到Pod的请求路由和转发，从而实现K8s层级的虚拟转发网络。
+
+在k8s中，提供相同服务的一组pod可以抽象成一个service，通过service提供的统一入口对外提供服务，每个service都有一个虚拟IP地址（VIP）和端口号供客户端访问。kube-proxy存在于各个node节点上，主要用于Service功能的实现，具体来说，就是实现集群内的客户端pod访问service，或者是集群外的主机通过NodePort等方式访问service。在当前版本的k8s中，kube-proxy默认使用的是iptables模式，通过各个node节点上的iptables规则来实现service的负载均衡，但是随着service数量的增大，iptables模式由于线性查找匹配、全量更新等特点，其性能会显著下降。从k8s的1.8版本开始，kube-proxy引入了IPVS模式，IPVS模式与iptables同样基于Netfilter，但是采用的hash表，因此当service数量达到一定规模时，hash查表的速度优势就会显现出来，从而提高service的服务性能。
+
+kube-proxy负责为Service提供cluster内部的服务发现和负载均衡，它运行在每个Node计算节点上，负责Pod网络代理, 它会定时从etcd服务获取到service信息来做相应的策略，维护网络规则和四层负载均衡工作。在K8s集群中微服务的负载均衡是由Kube-proxy实现的，它是K8s集群内部的负载均衡器，也是一个分布式代理服务器，在K8s的每个节点上都有一个，这一设计体现了它的伸缩性优势，需要访问服务的节点越多，提供负载均衡能力的Kube-proxy就越多，高可用节点也随之增多。
+
+service是一组pod的服务抽象，相当于一组pod的LB，负责将请求分发给对应的pod。service会为这个LB提供一个IP，一般称为cluster IP。kube-proxy的作用主要是负责service的实现，具体来说，就是实现了内部从pod到service和外部的从node port向service的访问。
+
+简单来说:
+
+> kube-proxy其实就是管理service的访问入口，包括集群内Pod到Service的访问和集群外访问service。
+> kube-proxy管理sevice的Endpoints，该service对外暴露一个Virtual IP，也成为Cluster IP, 集群内通过访问这个Cluster IP:Port就能访问到集群内对应的serivce下的Pod。
+> service是通过Selector选择的一组Pods的服务抽象，其实就是一个微服务，提供了服务的LB和反向代理的能力，而kube-proxy的主要作用就是负责service的实现。
+> service另外一个重要作用是，一个服务后端的Pods可能会随着生存灭亡而发生IP的改变，service的出现，给服务提供了一个固定的IP，而无视后端Endpoint的变化。
 
 ## CI/CD
 
