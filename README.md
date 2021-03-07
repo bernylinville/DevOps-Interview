@@ -989,6 +989,44 @@ service是一组pod的服务抽象，相当于一组pod的LB，负责将请求�
 > service是通过Selector选择的一组Pods的服务抽象，其实就是一个微服务，提供了服务的LB和反向代理的能力，而kube-proxy的主要作用就是负责service的实现。
 > service另外一个重要作用是，一个服务后端的Pods可能会随着生存灭亡而发生IP的改变，service的出现，给服务提供了一个固定的IP，而无视后端Endpoint的变化。
 
+### 10. 创建pod启动整个流程
+
+1. 客户端提交创建请求，可以通过API Server的Restful API，也可以使用kubectl命令行工具。支持的数据类型包括JSON和YAML
+2. API Server处理用户请求，存储Pod数据到ETCD
+3. 调度器通过API Server查看未绑定的Pod。尝试为Pod分配主机
+4. 过滤主机(调度预选):调度器用一组规则过滤到不符合要求的主机。比如Pod指定了所需要的的资源量，那么可用资源比Pod需要的资源量小的主机会被过滤掉
+5. 主机打分(调度优选):对第一个筛选出符合要求的主机进行打分，在主机打分阶段，调度器会考虑一些整体优化策略，比如把一个Replication Controller的副本分布在不同的主机上，使用低负载的主机等
+6. 选择主机: 选择打分最高的主机，进行binding操作，结果存储到etcd中
+7. kubelet根据调度结果执行Pod创建操作: 绑定成功后，scheduler会调用API Server的API在etcd中创建一个boundpod对象，描述在一个工作节点上绑定运行的所有Pod信息。运行在每个工作节点上的kubelet也会定期与etcd同步boundpod信息，一旦发现应该在该工作节点上运行的boundpod对象没有更新，则调用Docker API创建并启动Pod内的容器
+
+### 11. 滚动更新策略
+
+当集群中的某个服务需要升级时，我们需要停止目前与该服务相关的所有Pod,然后重新拉取镜像并启动。如果集群规模比较大，则这个工作就变成了一个挑战，而且先全部停止然后逐步升级的方式会导致长时间的服务不可用。Kubernetes提供了rolling-update滚动升级功能来解决上述问题
+
+滚动升级通过执行kubectl rolling-update命令一键完成，该命令创建了一个新的RC，然后自动控制旧的RC中的Pod副本数量逐渐减少到0，同时新的RC中的Pod副本的数量从0逐步增加到目标值，最终实现了Pod的升级。系统会要求新的RC和旧的RC在相同的命名空间下
+
+### 12. master node 有哪些服务
+
+k8s master上
+
+```
+kubectl
+apiserver
+kube-scheduler
+kube-controller-manager
+etcd
+flannel
+```
+
+k8s node有哪些
+
+```
+kubelet
+kube-proxy
+Docker
+flannel
+```
+
 ## CI/CD
 
 ## Network
@@ -1214,6 +1252,33 @@ ss -ant | awk 'NR>1 {++s[$1]} END {for(k in s) print k,s[k]}'
 被动端可能出现的状态: CLOSE_WAIT LAST_ACK
 
 ## Monitoring
+
+### 1. prometheus组件
+
+![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/prometheus.png)
+
+Prometheus由多个组件组成，但是其中许多组件是可选的；
+
+* Prometheus Server 用于抓取指标、存储时间序列数据
+* exporter 暴露指标让任务抓取
+* Pushgateway push的方式将指标数据推送到网关
+* alertmanager 处理报警的报警组件
+* adhoc 用于数据查询
+
+### 1. Prometheus operator组件
+
+![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/prometheus_operator.png)
+
+Operator是核心部分，作为一个控制器而存在，Operator会创建Prometheus、ServiceMonitor、AlertManager及Prometheus Rule这四个CRD资源对象，然后一直监控并维持这4个CRD资源对象的状态
+
+* Prometheus 资源对象是作为Prometheus Service存在的
+* ServiceMonitor 资源对象是专门提供metrics数据接口的exporter的抽象，Prometheus就是通过ServiceMonitor提供的metrics数据接口去 pull 数据的
+* AlerManager 资源对象是对应alertmanager组件
+* PrometheusRule 资源对象是被Prometheus实例使用的告警规则文件
+
+> CRD简介，全称CustomResourceDefinition,简单的来说CRD是对Kubernetes API的扩展，Kubernetes中的每个资源都是一个API对象集合
+
+这样，在集群中监控数据，就变成Kubernetes直接去监控资源对象，Service和ServiceMonitor都是Kubernetes的资源对象，一个ServiceMonitor可以通过labelSelector匹配一类Service，Prometheus也可以通过labelSelector匹配多个ServiceMonitor，并且Prometheus和AlertManager都是自动感知监控告警配置的变化，不需要人为进行reload操作
 
 ## Nginx/LVS
 
@@ -1447,3 +1512,52 @@ A：（1+1）/1=2 B：（1+2）/2=3/2 C：（1+3）/3=4/3 就把请求交给得�
 > 2.加权轮询设置了初始时服务器的全站，但是没有考虑运行过程中的服务器状态
 > 3.IP Hash保证同一客户端请求转发到同一后台服务器实现了session保存，然而当某一后台服务器发生故障时，某些客户端将访问失败；
 > 4.最少连接数只是考虑了后端服务器的连接数情况，并没有完全考虑服务器的整体性能
+
+## DataBase
+
+### MySQL
+
+#### 1. mysql复制不一致，卡主
+
+1. 人为原因导致从库与主库数据不一致（从库写入）
+2. 主从复制过程中，主库异常宕机
+3. 设置了ignore/do/rewrite等replication等规则
+4. binlog非row格式
+5. 异步复制本身不保证，半同步存在提交读的问题，增强半同步起来比较完美。 但对于异常重启（Replication Crash Safe），从库写数据（GTID）的防范，还需要策略来保证。
+6. 从库中断很久，binlog应用不连续，监控并及时修复主从
+7. 从库启用了诸如存储过程，从库禁用存储过程等
+8. 数据库大小版本/分支版本导致数据不一致？，主从版本统一
+9. 备份的时候没有指定参数 例如mysqldump —master-data=2 等
+10. 主从sql_mode 不一致
+11. 一主二从环境，二从的server id一致。
+12. MySQL自增列 主从不一致
+13. 主从信息保存在文件里面，文件本身的刷新是非事务的，导致从库重启后开始执行点大于实际执行点
+
+预防措施：
+
+```
+1.master:innodb_flush_log_at_trx_commit=1&sync_binlog=1
+2.slave:master_info_repository="TABLE"&relay_log_info_repository="TABLE"&relay_log_recovery=1
+3.设置从库库为只读模式
+4.可以使用5.7增强半同步避免数据丢失等
+5.binlog row格式
+6.必须引定期的数据校验机制
+```
+
+#### 2. Mysql 主从原理
+
+1. 在Slave 服务器上执行sart slave命令开启主从复制开关，开始进行主从复制。
+2. 此时，Slave服务器的IO线程会通过在master上已经授权的复制用户权限请求连接master服务器，并请求从执行binlog日志文件的指定位置（日志文件名和位置就是在配置主从复制服务时执行change master命令指定的）之后开始发送binlog日志内容
+3. Master服务器接收到来自Slave服务器的IO线程的请求后，其上负责复制的IO线程会根据Slave服务器的IO线程请求的信息分批读取指定binlog日志文件指定位置之后的binlog日志信息，然后返回给Slave端的IO线程。返回的信息中除了binlog日志内容外，还有在Master服务器端记录的IO线程。返回的信息中除了binlog中的下一个指定更新位置。
+4. 当Slave服务器的IO线程获取到Master服务器上IO线程发送的日志内容、日志文件及位置点后，会将binlog日志内容依次写到Slave端自身的Relay Log（即中继日志）文件（Mysql-relay-bin.xxx）的最末端，并将新的binlog文件名和位置记录到master-info文件中，以便下一次读取master端新binlog日志时能告诉Master服务器从新binlog日志的指定文件及位置开始读取新的binlog日志内容
+5. Slave服务器端的SQL线程会实时检测本地Relay Log 中IO线程新增的日志内容，然后及时把Relay LOG 文件中的内容解析成sql语句，并在自身Slave服务器上按解析SQL语句的位置顺序执行应用这样sql语句，并在relay-log.info中记录当前应用中继日志的文件名和位置点
+
+### Redis
+
+#### 1. Redis 基本数据类型
+
+* 字符串
+* 列表
+* 散列
+* 集合
+* 有序集合
