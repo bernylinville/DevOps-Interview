@@ -6,7 +6,6 @@
 > [Linux Performance](http://www.brendangregg.com/linuxperf.html)
 
 ![avatar](http://www.brendangregg.com/Perf/linux_observability_tools.png)
-
 ![avatar](http://www.brendangregg.com/BPF/bpf_performance_tools_book.png)
 
 ### command
@@ -753,7 +752,9 @@ kubelet 是 Master 在 Node 节点上的 Agent，管理本机运行容器的生�
 * 网络层：负责路由以及把分组报文发送给目标网络或主机。
 * 链路层：负责封装和解封装IP报文，发送和接受ARP/RARP报文等 下面的是两者之间的对比:
 
-两者比较图
+两者比较图：
+
+![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/tcp-ip.png)
 
 ## Monitoring
 
