@@ -649,9 +649,81 @@ $1～$n
 
 数据库方面双主带多从，读写分离罗改应用代码，把不常修改的数据全部读入memcache中（比如用户登录用的帐号数据），这样基本把mysql的读压力分担走优化mysql语句，该用myiasm表的用myiasm表（比如不太太重要的用户帐号数据表），数据库设置concurrent_insert直接从表尾并发插入，这样可以有效降低大量注册与登录的锁竞争
 
-### 11. 讲术CDN工作原理和优缺？ 
+### 11. CDN工作原理和优缺？ 
 
 优点就是分流罗，可以有效分担静态资源的压力最大缺点是各地数据同步需要一段时间，更新一个重要静态文件的话，生效时间急死人，而且价格也不便宜
+
+### 12. 进程/线程
+
+### 13. 进程间通信方式（管道的应用场景）
+
+### 14. Linux文件权限755（文件目录x权限区别）
+
+### 15. cpu load x （x这个值代表什么意思）
+
+### 16. 如何查看进程使用到的文件
+
+```shell
+sudo lsof -p 4000236
+COMMAND     PID             USER   FD      TYPE DEVICE SIZE/OFF     NODE NAME
+nginx   4000236 systemd-timesync  cwd       DIR   0,72     4096  8782388 /
+nginx   4000236 systemd-timesync  rtd       DIR   0,72     4096  8782388 /
+nginx   4000236 systemd-timesync  txt       REG   0,72  1176936  4982148 /usr/sbin/nginx
+nginx   4000236 systemd-timesync  mem       REG   8,82           4982148 /usr/sbin/nginx (path inode=5777766)
+nginx   4000236 systemd-timesync  DEL       REG   0,18          11165307 /[aio]
+nginx   4000236 systemd-timesync  mem       REG   8,82           4325965 /lib/libz.so.1.2.11 (stat: No such file or directory)
+nginx   4000236 systemd-timesync  mem       REG   8,82           4325962 /lib/libcrypto.so.1.1 (stat: No such file or directory)
+nginx   4000236 systemd-timesync  mem       REG   8,82           4325963 /lib/libssl.so.1.1 (stat: No such file or directory)
+nginx   4000236 systemd-timesync  mem       REG   8,82           4982107 /usr/lib/libpcre.so.1.2.12 (stat: No such file or directory)
+nginx   4000236 systemd-timesync  mem       REG   8,82           4325960 /lib/ld-musl-x86_64.so.1 (stat: No such file or directory)
+nginx   4000236 systemd-timesync  DEL       REG    0,1              7789 /dev/zero
+nginx   4000236 systemd-timesync    0u      CHR    1,3      0t0        5 /dev/null
+nginx   4000236 systemd-timesync    1w     FIFO   0,12      0t0 11163212 pipe
+nginx   4000236 systemd-timesync    2w     FIFO   0,12      0t0 11163213 pipe
+nginx   4000236 systemd-timesync    3w     FIFO   0,12      0t0 11163212 pipe
+nginx   4000236 systemd-timesync    4u     sock    0,8      0t0 11159464 protocol: UNIX
+nginx   4000236 systemd-timesync    5w     FIFO   0,12      0t0 11163213 pipe
+nginx   4000236 systemd-timesync    6w     FIFO   0,12      0t0 11163212 pipe
+nginx   4000236 systemd-timesync    7u     sock    0,8      0t0 11159461 protocol: TCP
+nginx   4000236 systemd-timesync    8u     sock    0,8      0t0 11159463 protocol: UNIX
+nginx   4000236 systemd-timesync    9u  a_inode   0,13        0     9096 [eventpoll]
+nginx   4000236 systemd-timesync   10u  a_inode   0,13        0     9096 [eventfd]
+nginx   4000236 systemd-timesync   11u  a_inode   0,13        0     9096 [eventfd]
+nginx   4000236 systemd-timesync   12u     sock    0,8      0t0 11159466 protocol: UNIX
+nginx   4000236 systemd-timesync   13u     sock    0,8      0t0 11159468 protocol: UNIX
+nginx   4000236 systemd-timesync   14u     sock    0,8      0t0 11159470 protocol: UNIX
+nginx   4000236 systemd-timesync   15u     sock    0,8      0t0 11159472 protocol: UNIX
+nginx   4000236 systemd-timesync   16u     sock    0,8      0t0 11159474 protocol: UNIX
+nginx   4000236 systemd-timesync   17u     sock    0,8      0t0 11159476 protocol: UNIX
+```
+
+### 17. 软硬链接区别（实现机制）
+
+### 18. kill和kill -9的区别，有没有更优雅的方式kill进程
+
+### 19. buffer和cache的区别
+
+### 20. Shell脚本中的return和exit作用及return的取值范围
+
+### 21. Linux启动流程
+
+### 22. 子网掩码的作用
+
+### 23. 如何找出日志中 “www.baidu.com” 出现的次数
+
+### 24. 服务器CPU负载很高，但是使用率不高
+
+### 25. 系统调优
+
+### 26. 如果腾讯视频有大量用户觉得卡
+
+### 27. 创建0-99个空文件
+
+```shell
+touch test{1..99}
+```
+
+### 28. 判断一个文件中的重复IP地址
 
 ## 安全
 
@@ -1508,6 +1580,16 @@ input( "提示信息" )
 
 ### 电影票抢座问题
 
+### Python伪线程
+
+### 线程池实现原理
+
+### Python协程相关
+
+### Python多进程
+
+### 如何反转一个整数
+
 ## Ansible
 
 ## Docker
@@ -1589,6 +1671,12 @@ OverlayFS是一种和AUFS很类似的文件系统，与AUFS相比，OverlayFS有
 * OverlayFS （overlay2）镜像分层与共享
 
 overlay驱动只工作在一个lower OverlayFS层之上，因此需要硬链接来实现多层镜像，但overlay2驱动原生地支持多层lower OverlayFS镜像(最多128层)。因此overlay2驱动在合层相关的命令(如build何commit)中提供了更好的性能，与overlay驱动对比，减少了inode消耗
+
+### 4. 容器和VM的区别
+
+### 5. 资源隔离和资源限制相关问题
+
+### 6. docker的namespace
 
 ## Kubernetes
 
@@ -2037,6 +2125,16 @@ ss -ant | awk 'NR>1 {++s[$1]} END {for(k in s) print k,s[k]}'
 主动端可能出现的状态: FIN_WAIT1、FIN_WAIT2、CLOSING、TIME_WAIT
 被动端可能出现的状态: CLOSE_WAIT LAST_ACK
 
+### 13. 最后一次ACK包丢失会进入什么样的一个状态
+
+### 14. 关于TIME_WAIT状态等待2MSL解决什么问题
+
+### 15. DNS使用的到协议（TCP/UDP分别在什么情况下使用）
+
+### 16. 广播风暴产生的原因及解决方法
+
+### 17. TLS/SSL处于OSI哪一层
+
 ## Monitoring
 
 ### 1. prometheus组件
@@ -2323,6 +2421,8 @@ A：（1+1）/1=2 B：（1+2）/2=3/2 C：（1+3）/3=4/3 就把请求交给得�
 
 先用智能dsn负载到不同的lvs上如果有钱可以在lvs前端上f5智能dns——F5——LVS三层负载分流，最后最大的压力其实还是在数据库上
 
+### 12. Apache工作机制和Nginx工作机制对比分析
+
 ## DataBase
 
 ### MySQL
@@ -2384,6 +2484,8 @@ A：（1+1）/1=2 B：（1+2）/2=3/2 C：（1+3）/3=4/3 就把请求交给得�
 当主服务器的BGSAVE命令执行完毕，主服务器将生成的RDB文件发送给从服务器，从服务器接收并加载这个RDB文件，将自己的数据库状态更新至主服务器执行BGSAVE命令是的数据库状态。
 主服务器将记录在缓冲区里面的所有写命令发送给从服务器，从服务器执行这些写命令，将自己的数据库状态更新至主服务器当前所处的状态
 ```
+
+### 3. Redis持久化存储机制
 
 ## 中间件
 
@@ -2507,6 +2609,8 @@ GitLab提供持续集成服务。如果添加一个.gitlab-ci.yml文件到项目
 2. 创建管理角色（Manage Roles）
 3. 创建用户
 4. Assign Roles可以为用户分配所属角色
+
+### 3. Gitlab调优
 
 ## 其他
 
