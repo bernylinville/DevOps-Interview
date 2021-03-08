@@ -208,25 +208,359 @@ PID(进程号)、 USER（运行用户）、PR（优先级）、NI（任务nice�
 
 #### 4. ps
 
+```shell
+To see every process on the system using standard syntax:
+          ps -e
+          ps -ef
+          ps -eF
+          ps -ely
+          
+ps -ef
+UID          PID    PPID  C STIME TTY          TIME CMD
+root           1       0  0 Feb10 ?        00:00:51 /sbin/init
+root           2       0  0 Feb10 ?        00:10:00 [kthreadd]
+root           3       2  0 Feb10 ?        00:00:00 [rcu_gp]
+root           4       2  0 Feb10 ?        00:00:00 [rcu_par_gp]
+root           6       2  0 Feb10 ?        00:00:00 [kworker/0:0H-events_highpri]
+root           9       2  0 Feb10 ?        00:00:00 [mm_percpu_wq]
+root          10       2  0 Feb10 ?        00:00:00 [rcu_tasks_rude_]
+root          11       2  0 Feb10 ?        00:00:00 [rcu_tasks_trace]
+root          12       2  0 Feb10 ?        00:01:14 [ksoftirqd/0]
+root          13       2  0 Feb10 ?        00:40:11 [rcu_sched]
+```
+
+```shell
+To see every process on the system using BSD syntax:
+          ps ax
+          ps axu
+       
+ps aux       
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root           1  0.0  0.0 167632 12656 ?        Ss   Feb10   0:51 /sbin/init
+root           2  0.0  0.0      0     0 ?        S    Feb10  10:00 [kthreadd]
+root           3  0.0  0.0      0     0 ?        I<   Feb10   0:00 [rcu_gp]
+root           4  0.0  0.0      0     0 ?        I<   Feb10   0:00 [rcu_par_gp]
+root           6  0.0  0.0      0     0 ?        I<   Feb10   0:00 [kworker/0:0H-events_highpri]
+root           9  0.0  0.0      0     0 ?        I<   Feb10   0:00 [mm_percpu_wq]
+root          10  0.0  0.0      0     0 ?        S    Feb10   0:00 [rcu_tasks_rude_]
+root          11  0.0  0.0      0     0 ?        S    Feb10   0:00 [rcu_tasks_trace]
+root          12  0.0  0.0      0     0 ?        S    Feb10   1:14 [ksoftirqd/0]
+root          13  0.1  0.0      0     0 ?        I    Feb10  40:11 [rcu_sched]
+root          14  0.0  0.0      0     0 ?        S    Feb10   0:10 [migration/0]
+root          15  0.0  0.0      0     0 ?        S    Feb10   0:00 [cpuhp/0]
+root          16  0.0  0.0      0     0 ?        S    Feb10   0:00 [cpuhp/1]
+root          17  0.0  0.0      0     0 ?        S    Feb10   0:11 [migration/1]
+root          18  0.0  0.0      0     0 ?        S    Feb10   2:01 [ksoftirqd/1]
+root          20  0.0  0.0      0     0 ?        I<   Feb10   0:00 [kworker/1:0H-events_highpri]          
+          
+```
+
+```shell
+To print a process tree:
+          ps -ejH
+          ps axjf
+          
+```
+
+```shell
+To get security info:
+          ps -eo euser,ruser,suser,fuser,f,comm,label
+          ps axZ
+          ps -eM
+
+To see every process running as root (real & effective ID) in user format:
+          ps -U root -u root u
+
+To see every process with a user-defined format:
+          ps -eo pid,tid,class,rtprio,ni,pri,psr,pcpu,stat,wchan:14,comm
+          ps axo stat,euid,ruid,tty,tpgid,sess,pgrp,ppid,pid,pcpu,comm
+          ps -Ao pid,tt,user,fname,tmout,f,wchan
+
+Print only the process IDs of syslogd:
+          ps -C syslogd -o pid=
+
+Print only the name of PID 42:
+          ps -q 42 -o comm=
+          
+```
+
+```
+-e     Select all processes.  Identical to -A.
+-f     Do full-format listing.  This option can be combined with many other UNIX-style options to add additional columns.  It also causes the command arguments to        be printed.  When used with -L, the NLWP (number of threads) and LWP (thread ID) columns will be added.  See the c option, the format keyword args, and the        format keyword comm.
+ 
+```
+
+```tldr
+- List all running processes:
+    ps aux
+
+- List all running processes including the full command string:
+    ps auxww
+
+- Search for a process that matches a string:
+    ps aux | grep string
+
+- List all processes of the current user in extra full format:
+    ps --user $(id -u) -F
+
+- List all processes of the current user as a tree:
+    ps --user $(id -u) f
+
+- Get the parent pid of a process:
+    ps -o ppid= -p pid
+
+- Sort processes by memory consumption:
+    ps --sort size
+
+```
+
 #### 5. netstat
+
+```tldr
+- List all ports:
+    netstat -a
+
+- List all listening ports:
+    netstat -l
+
+- List listening TCP ports:
+    netstat -t
+
+- Display PID and program names for a specific protocol:
+    netstat -p protocol
+
+- Print the routing table:
+    netstat -nr
+```
+
+```shell
+netstat -nlpt
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 0.0.0.0:8080            0.0.0.0:*               LISTEN      4000109/docker-prox
+tcp        0      0 0.0.0.0:6800            0.0.0.0:*               LISTEN      2464597/docker-prox
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      46611/nginx: master
+tcp        0      0 0.0.0.0:10001           0.0.0.0:*               LISTEN      3755365/docker-prox
+tcp        0      0 0.0.0.0:16881           0.0.0.0:*               LISTEN      2388957/docker-prox
+tcp        0      0 0.0.0.0:16882           0.0.0.0:*               LISTEN      2389935/docker-prox
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      2354669/sshd: /usr/
+tcp        0      0 0.0.0.0:16888           0.0.0.0:*               LISTEN      2464571/docker-prox
+tcp        0      0 0.0.0.0:443             0.0.0.0:*               LISTEN      46611/nginx: master
+tcp        0      0 0.0.0.0:445             0.0.0.0:*               LISTEN      457985/smbd
+tcp        0      0 127.0.0.1:8125          0.0.0.0:*               LISTEN      996/netdata
+tcp        0      0 0.0.0.0:19999           0.0.0.0:*               LISTEN      996/netdata
+tcp        0      0 0.0.0.0:6880            0.0.0.0:*               LISTEN      2404858/docker-prox
+tcp        0      0 0.0.0.0:18080           0.0.0.0:*               LISTEN      2388945/docker-prox
+tcp        0      0 0.0.0.0:18081           0.0.0.0:*               LISTEN      2389923/docker-prox
+tcp        0      0 0.0.0.0:139             0.0.0.0:*               LISTEN      457985/smbd
+tcp6       0      0 :::80                   :::*                    LISTEN      46611/nginx: master
+tcp6       0      0 :::22                   :::*                    LISTEN      2354669/sshd: /usr/
+tcp6       0      0 ::1:8125                :::*                    LISTEN      996/netdata
+tcp6       0      0 :::445                  :::*                    LISTEN      457985/smbd
+tcp6       0      0 :::139                  :::*                    LISTEN      457985/smbd
+
+netstat -nlpu
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+udp        0      0 127.0.0.1:8125          0.0.0.0:*                           996/netdata
+udp        0      0 172.17.255.255:137      0.0.0.0:*                           457973/nmbd
+udp        0      0 172.17.0.1:137          0.0.0.0:*                           457973/nmbd
+udp        0      0 192.168.100.255:138     0.0.0.0:*                           457973/nmbd
+udp        0      0 192.168.100.201:138     0.0.0.0:*                           457973/nmbd
+udp        0      0 0.0.0.0:138             0.0.0.0:*                           457973/nmbd
+udp        0      0 0.0.0.0:16881           0.0.0.0:*                           2388970/docker-prox
+udp        0      0 0.0.0.0:16882           0.0.0.0:*                           2389949/docker-prox
+udp        0      0 0.0.0.0:16888           0.0.0.0:*                           2464583/docker-prox
+udp6       0      0 ::1:8125                :::*                                996/netdata
+```
 
 #### 6. tail
 
+```shell
+tail -fn 500 /var/logs/nginx/access.log
+```
+
+```tldr
+- Show last 'num' lines in file:
+    tail -n num file
+
+- Show all file since line 'num':
+    tail -n +num file
+
+- Show last 'num' bytes in file:
+    tail -c num file
+
+- Keep reading file until `Ctrl + C`:
+    tail -f file
+
+- Keep reading file until `Ctrl + C`, even if the file is rotated:
+    tail -F file
+
+- Show last 'num' lines in 'file' and refresh every 'n' seconds:
+    tail -n num -s n -f file
+```
+
 #### 7. cat
+
+```tldr
+- Print the contents of a file to the standard output:
+    cat file
+
+- Concatenate several files into the target file:
+    cat file1 file2 > target_file
+
+- Append several files into the target file:
+    cat file1 file2 >> target_file
+
+- Number all output lines:
+    cat -n file
+
+- Display non-printable and whitespace characters (with `M-` prefix if non-ASCII):
+    cat -v -t -e file
+```
+
+```
+-v, --show-nonprinting   use ^ and M- notation, except for LFD and TAB
+-t                       equivalent to -vT
+-e                       equivalent to -vE
+```
 
 #### 8. less
 
+```tldr
+- Open a file:
+    less source_file
+
+- Page down / up:
+    <Space> (down), b (up)
+
+- Go to end / start of file:
+    G (end), g (start)
+
+- Forward search for a string (press `n`/`N` to go to next/previous match):
+    /something
+
+- Backward search for a string (press `n`/`N` to go to next/previous match):
+    ?something
+
+- Follow the output of the currently opened file:
+    F
+
+- Open the current file in an editor:
+    v
+
+- Exit:
+    q
+```
+
 #### 9. df
+
+```tldr
+- Display all filesystems and their disk usage:
+    df
+
+- Display all filesystems and their disk usage in human readable form:
+    df -h
+
+- Display the filesystem and its disk usage containing the given file or directory:
+    df path/to/file_or_directory
+
+- Display statistics on the number of free inodes:
+    df -i
+
+- Display filesystems but exclude the specified type:
+    df -x squashfs -x tmpfs
+```
 
 #### 10. du
 
+```
+- List the sizes of a directory and any subdirectories, in the given unit (KB/MB/GB):
+    du -k|m|g path/to/directory
+
+- List the sizes of a directory and any subdirectories, in human-readable form (i.e. auto-selecting the appropriate unit for each size):
+    du -h path/to/directory
+
+- Show the size of a single directory, in human readable units:
+    du -sh path/to/directory
+
+- List the human-readable sizes of a directory and of all the files and directories within it:
+    du -ah path/to/directory
+
+- List the human-readable sizes of a directory and any subdirectories, up to N levels deep:
+    du -h -d N path/to/directory
+
+- List the human-readable size of all `.jpg` files in subdirectories of the current directory, and show a cumulative total at the end:
+    du -ch */*.jpg
+```
+
 #### 11. lsof
+
+```tldr
+- Find the processes that have a given file open:
+    lsof path/to/file
+
+- Find the process that opened a local internet port:
+    lsof -i :port
+
+- Only output the process ID (PID):
+    lsof -t path/to/file
+
+- List files opened by the given user:
+    lsof -u username
+
+- List files opened by the given command or process:
+    lsof -c process_or_command_name
+
+- List files opened by a specific process, given its PID:
+    lsof -p PID
+
+- List open files in a directory:
+    lsof +D path/to/directory
+
+- Find the process that is listening on a local TCP port:
+    lsof -iTCP:port -sTCP:LISTEN
+```
 
 #### 12. lspid
 
 #### 13. dmesg
 
+```tldr
+- Show kernel messages:
+    dmesg
+
+- Show how much physical memory is available on this system:
+    dmesg | grep -i memory
+
+- Show kernel messages 1 page at a time:
+    dmesg | less
+```
+
 #### 14. iotop
+
+```tldr
+- Start top-like I/O monitor:
+    sudo iotop
+
+- Show only processes or threads actually doing I/O:
+    sudo iotop --only
+
+- Show I/O usage in non-interactive mode:
+    sudo iotop --batch
+
+- Show only I/O usage of processes (default is to show all threads):
+    sudo iotop --processes
+
+- Show I/O usage of given PID(s):
+    sudo iotop --pid=PID
+
+- Show I/O usage of a given user:
+    sudo iotop --user=user
+
+- Show accumulated I/O instead of bandwidth:
+    sudo iotop --accumulated
+```
 
 #### 15. pidstat
 
