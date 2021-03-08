@@ -1019,6 +1019,102 @@ b'china'
 
 3）dict的.keys()、.items 和.values()方法返回迭代器，而之前的iterkeys()等函数都被废弃。同时去掉的还有 dict.has_key()，用 in替代它吧 。
 
+#### 打开文件
+
+原：
+
+```python
+file( ..... )
+```
+
+或 
+
+```python
+open(.....)
+```
+
+改为只能用
+
+```python
+open(.....)
+```
+
+从键盘录入一个字符串
+
+原:
+
+```python
+raw_input( "提示信息" )
+```
+
+改为:
+
+```python
+input( "提示信息" )
+```
+
+在python2.x中raw_input()和input( )，两个函数都存在，其中区别为：
+
+* raw_input()---将所有输入作为字符串看待，返回字符串类型
+* input()-----只能接收"数字"的输入，在对待纯数字输入时具有自己的特性，它返回所输入的数字的类型（int, float ）
+
+在python3.x中raw_input()和input( )进行了整合，去除了raw_input()，仅保留了input()函数，其接收任意任性输入，将所有输入默认为字符串处理，并返回字符串类型。
+
+#### map、filter 和 reduce
+
+这三个函数号称是函数式编程的代表。在 Python3.x 和 Python2.x 中也有了很大的差异。
+
+首先我们先简单的在 Python2.x 的交互下输入 map 和 filter,看到它们两者的类型是 built-in function(内置函数):
+
+```python
+>>> map
+<built-in function map>
+>>> filter
+<built-in function filter>
+>>>
+```
+
+它们输出的结果类型都是列表:
+
+```python
+>>> map(lambda x:x *2, [1,2,3])
+[2, 4, 6]
+>>> filter(lambda x:x %2 ==0,range(10))
+[0, 2, 4, 6, 8]
+>>>
+```
+
+但是在Python 3.x中它们却不是这个样子了：
+
+```python
+>>> map
+<class 'map'>
+>>> map(print,[1,2,3])
+<map object at 0x10d8bd400>
+>>> filter
+<class 'filter'>
+>>> filter(lambda x:x % 2 == 0, range(10))
+<filter object at 0x10d8bd3c8>
+>>>
+```
+
+首先它们从函数变成了类，其次，它们的返回结果也从当初的列表成了一个可迭代的对象, 我们尝试用 next 函数来进行手工迭代:
+
+```python
+>>> f =filter(lambda x:x %2 ==0, range(10))
+>>> next(f)
+0
+>>> next(f)
+2
+>>> next(f)
+4
+>>> next(f)
+6
+>>>
+```
+
+对于比较高端的 reduce 函数，它在 Python 3.x 中已经不属于 built-in 了，被挪到 functools 模块当中。
+
 ## Ansible
 
 ## Docker
