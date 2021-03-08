@@ -594,6 +594,34 @@ find {{dir}}/ -type f -mtime -7 -exec rm -f {} \;
 > core dump ???
 > [using_ulimt](https://wiki.archlinux.org/index.php/Core_dump#Using_ulimit)
 
+#### 22. tcpdump
+
+```tldr
+- List available network interfaces:
+    tcpdump -D
+
+- Capture the traffic of a specific interface:
+    tcpdump -i eth0
+
+- Capture all TCP traffic showing contents (ASCII) in console:
+    tcpdump -A tcp
+
+- Capture the traffic from or to a host:
+    tcpdump host www.example.com
+
+- Capture the traffic from a specific interface, source, destination and destination port:
+    tcpdump -i eth0 src 192.168.1.1 and dst 192.168.1.2 and dst port 80
+
+- Capture the traffic of a network:
+    tcpdump net 192.168.1.0/24
+
+- Capture all traffic except traffic over port 22 and save to a dump file:
+    tcpdump -w dumpfile.pcap port not 22
+
+- Read from a given dump file:
+    tcpdump -r dumpfile.pcap
+```
+
 ### 1. 什么是并发、并行、阻塞、异步、同步
 
 * 并发/并行: CPU在执行多个任务时的方式，并发表示同一段时间里面有多个进程在同一CPU执行，在极短的时间互相切换使人不会发觉。并行只会出现在多个CPU的情况下，表示同一时刻之内有多个进程在执行
@@ -725,6 +753,10 @@ touch test{1..99}
 
 ### 28. 判断一个文件中的重复IP地址
 
+### 29. 你认为什么是SRE
+
+### 30. awk 打印第 10 行
+
 ## 安全
 
 ### 1. 如何防止DDOS 攻击？如提供足够资源给你，要保证用户访问不影响。
@@ -748,6 +780,10 @@ CC攻击的原理就是攻击者
 ### 3. 介绍一下你是如何做黑客入侵的安全防护？
 
 ## Python
+
+### 一个列表，找出三个数的和等于19，代码实现
+
+### Python打开一个文件，找出某个字符串最快的方法
 
 ### 常用的内置函数
 
@@ -2656,3 +2692,11 @@ CN=test,OU=developer,DC=domainname,DC=com
 
 可管理性
 由于机房具有一定复杂性，随着业务的不断发展，管理的任务必定会日益繁重。所以在机房的设计中，必须建立一套全面、完善的机房管理和监控系统。所选用的设备应具有智能化、可管理的功能，同时条用先进和管理监控系统设备及软件，实现先进的集中管理监控，实时监控、监测整个机房的运行状况，实时灯光、语音报警，实时事件记录，这样可以迅速确定故障，简化机房管理人员的维护工作，从而为计算机机房的安全、可靠运行提供最有力的保障。
+
+### 4. 16个球，只有一个更轻，一个天平，怎么三次找出最轻的球
+
+### 5. 烧一根不均匀的绳子,从头烧到尾是要1个小时.现在有若干条材质相同的绳子 问如何用烧绳的方法来计时一个小时15分钟
+
+### 6. 一个用户不能访问，解决思路
+
+### 7. 怎么证明一个用户被劫持了
