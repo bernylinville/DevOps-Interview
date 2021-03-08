@@ -161,7 +161,7 @@ running/sleeping/stopped/zombie
 * %sy 内核空间占用CPU百分比
 * %ni 用户进程空间内改变过优先级的进程占用CPU百分比
 * %id 空闲CPU百分比
-* %wa 等待输入输出（I/O）的CPU时间百分比 
+* %wa 等待输入输出（I/O）的CPU时间百分比
 * %hi 指的是cpu处理硬件中断的时间
 * %si指的是cpu处理软中断的时间
 * %st 用于有虚拟cpu的情况，用来指示被虚拟机偷掉的cpu时间
@@ -1072,7 +1072,7 @@ flannel
 
 两者比较图：
 
-![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/tcp-ip.png)
+![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/image/tcp-ip.png)
 
 ### 6. 常见的http状态码
 
@@ -1088,8 +1088,8 @@ flannel
 
 基于RSA握手和密钥交换的客户端验证服务器为实例详解TLS/SSL握手过程
 
-![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/ssl1.png)
-![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/ssl2.png)
+![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/image/ssl1.png)
+![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/image/ssl2.png)
 
 1.client_hello
 客户端发起请求，以明文传输请求信息，包含版本信息，加密套件候选列表，压缩算法候选列表，随机数，扩展字段等信息
@@ -1121,9 +1121,10 @@ server_hello_done 通知客户端server_hello信息发送结束；
 7.加密通信
 开始使用协商密钥与算法进行加密通信。
 
-关于SSL加密协议可以参考https://www.cnblogs.com/barrywxx/p/8570715.html
+关于SSL加密协议可以参考[SSL/TLS握手过程](https://www.cnblogs.com/barrywxx/p/8570715.html)
 
 ### 8. tcp和udp的区别
+
 相同点
 UDP协议和TCP协议都是传输层协议
 
@@ -1166,9 +1167,10 @@ FTP
 SMTP
 
 ### 9. tcp 三次握手
+
 在TCP/IP协议中，TCP协议提供可靠的连接服务，采用三次握手建立一个连接
 
-![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/tcp3.jpeg)
+![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/image/tcp3.jpeg)
 
 握手之前主动打开连接的客户端结束CLOSED阶段，被动打开的服务器端也结束CLOSED阶段，并进入LISTEN阶段。随后开始“三次握手”：
 
@@ -1189,6 +1191,7 @@ SMTP
 在客户端与服务器端传输的TCP报文中，双方的确认号Ack和序号Seq的值，都是在彼此Ack和Seq值的基础上进行计算的，这样做保证了TCP报文传输的连贯性。一旦出现某一方发出的TCP报文丢失，便无法继续”握手”，以此确保了”三次握手”的顺利完成。
 
 ### 10. 为什么要进行第三次握手？
+
 为了防止服务器端开启一些无用的连接增加服务器开销以及防止已失效的连接请求报文段突然又传送到了服务端，因而产生错误。
 
 由于网络传输是有延时的(要通过网络光纤和各种中间代理服务器)，在传输的过程中，比如客户端发起了SYN=1创建连接的请求(第一次握手)。
@@ -1200,9 +1203,10 @@ SMTP
 服务器端是不知道客户端有没有接收到服务器端返回的信息的。
 
 ### 11. TCP 四次挥手
+
 所谓的四次挥手即TCP连接的释放(解除)。连接的释放必须是一方主动释放，另一方被动释放。以下为客户端主动发起释放连接的图解
 
-![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/tcp4.jpeg)
+![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/image/tcp4.jpeg)
 
 挥手之前主动释放连接的客户端结束ESTABLISHED阶段。随后开始“四次挥手”：
 (1) 首先客户端想要释放连接，向服务器端发送一段TCP报文，其中：
@@ -1255,7 +1259,7 @@ ss -ant | awk 'NR>1 {++s[$1]} END {for(k in s) print k,s[k]}'
 
 ### 1. prometheus组件
 
-![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/prometheus.png)
+![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/image/prometheus.png)
 
 Prometheus由多个组件组成，但是其中许多组件是可选的；
 
@@ -1267,7 +1271,7 @@ Prometheus由多个组件组成，但是其中许多组件是可选的；
 
 ### 1. Prometheus operator组件
 
-![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/prometheus_operator.png)
+![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/image/prometheus_operator.png)
 
 Operator是核心部分，作为一个控制器而存在，Operator会创建Prometheus、ServiceMonitor、AlertManager及Prometheus Rule这四个CRD资源对象，然后一直监控并维持这4个CRD资源对象的状态
 
@@ -1601,11 +1605,11 @@ kafka是采用Scala语言开发，它主要用于处理灵活的流式数据，�
 2.结构不通
 RabbitMQ采用AMQP (Advanced Message Queuing Protocol，高级消息队列协议)是一个进程间传递异步信息的网络协议
 
-![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/kafka1.png)
+![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/image/kafka1.png)
 
 kafka采用mq结构: broker有part分区的概念
 
-![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/kafka_broker.png)
+![avatar](https://raw.githubusercontent.com/bernylinville/DevOps-Interview/main/image/kafka_broker.png)
 
 3.在集群负载均衡方面
 rabbitMQ的负载均衡需要单独的loadbalancer进行支持
@@ -1682,6 +1686,7 @@ log.segment.bytes=1073741824
 #最前面添加一行
 JMX_PORT=8060
 ```
+
 kafka更多性能优化可以参考https://blog.csdn.net/bluetjs/article/details/80485359
 
 ## 运维平台
@@ -1705,7 +1710,7 @@ LDAP 目录类似于文件系统目录
 
 ```
 CN=test,OU=developer,DC=domainname,DC=com
-在上面的代码中 cn=test 可能代表一个用户名，ou=developer 代表一个 active directory 中的组织单位。这句话的含义可能就是说明 test 
+在上面的代码中 cn=test 可能代表一个用户名，ou=developer 代表一个 active directory 中的组织单位。这句话的含义可能就是说明 test
 ```
 
 ### 2. 网站访问慢排查步骤
