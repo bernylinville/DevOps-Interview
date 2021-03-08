@@ -570,6 +570,13 @@ tail -fn 500 /var/logs/nginx/access.log
 
 #### 18. free
 
+```
+free -h
+              total        used        free      shared  buff/cache   available
+Mem:           31Gi        17Gi       1.6Gi        32Mi        11Gi        12Gi
+Swap:         975Mi       0.0Ki       975Mi
+```
+
 #### 19. vmstat
 
 #### 20. find
