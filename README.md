@@ -1931,6 +1931,294 @@ overlay驱动只工作在一个lower OverlayFS层之上，因此需要硬链接�
 
 ### 6. docker的namespace
 
+ocker 使用一种称为 namespaces 的技术来为容器提供运行环境的隔离。运行容器时，docker 引擎会为该容器创建一组如下的名称空间
+
+| 名称空间 | 描述                                                                                                |
+| -------- | --------------------------------------------------------------------------------------------------- |
+| PID      | 提供进程隔离。每个容器中都有独立的进程号                                                            |
+| Network  | 提供网络资源隔离。每个容器都有独立的网络设备接口，IPv4, IPv6 协议栈，路由表，防火墙等               |
+| IPC      | 提供进程间通信资源隔离。容器中进程间通信仍然使用 Linux 进程间通信方法，信号量，消息队列，共享内存等 |
+| Mount    | 提供文件系统隔离。每个容器都有独立的 / 根文件系统                                                   |
+| UTS      | 提供容器主机名和域名隔离。每个容器都有独立的主机名和域名，其主机名一般为容器 ID                     |
+| User     | 提供用户及用户组隔离。每个容器都有独立的用户，用户组及其相关访问权限                                |
+
+### 7. 常用参数配置
+
+```shell
+# 进程相关
+--config-file string: 指定配置文件,默认是 `/etc/docker/daemon.json`
+-p, --pidfile string: 指定 PID 文件.默认是 `/var/run/docker.pid`
+--containerd string: 指定 grpc 地址
+--data-root string: 指定 docker 镜像和容器相关文件保存位置.默认是 `/var/lib/docker`
+--log-driver string: 指定日志驱动.默认为 `json-file`
+--log-level string: 指定日志级别.可选值为 debug,info,warn,error,fatal.默认 `info`
+
+log-opts: 指定日志选项,只能用于配置文件中.`max-size` 指定日志文件大小,`max-file` 指定日志文件个数
+
+# 镜像相关
+--insecure-registry list: 指定不安全的镜像仓库地址
+--registry-mirror list: 指定安全的镜像仓库.配置文件中为 `registry-mirrors`
+
+# 网络相关
+--bip string: 指定 docker0 网桥 IP 地址
+--default-gateway string: 子网 IPv4 默认网关
+--default-gateway-v6 string: 子网 IPv6 默认网关
+--fixed-cidr string: 指定子网 IPv4 地址
+--fixed-cidr-v6 string: 指定子网 IPv6 地址
+--mtu int: 指定容器最大传输单元
+--dns list: 指定容器使用的 DNS 地址
+
+# 调试
+-D, --debug: 开启 debug 模式,多用于调试
+```
+
+### 8. Control groups
+
+控制组 (cgroups) 以一组进程为目标进行系统资源分配和控制，它提供了如下功能:
+
+* Resource limitation, 资源限制，如内存，CPU 等硬件资源
+* Prioritization, 优先级控制
+* Accounting, 审计或统计
+* Controll, 进程控制，如进程挂起与恢复
+
+系统管理员可更具体地控制对系统资源的分配，优先顺序，拒绝，管理和监控。可更好地根据任务和用户分配硬件资源，提高总体效率。在实践中，系统管理员一般会利用 CGroup 做下面这些事:
+
+* 隔离进程集合，并限制他们所消耗的资源
+* 为这组进程分配其足够使用的内存，网络带宽和磁盘存储限制
+* 限制访问某些设备
+
+### 9. Union file systems
+
+Union file systems (联合文件系统) 是通过创建层级进行操作的文件系统，它将对文件系统的修改作为一次提交来一层层的叠加。常用的包含 overlay2 aufs
+
+overlay2 采用三层结构:
+
+* lowerdir: 只读层，镜像层
+* uperdir: 读写层。创建容器时创建，所有对容器的改动发生在这里
+* merged: 容器挂载点，将以上两层进行合并后看到的内容
+
+### 10. docker 开发最佳实践
+
+#### 保持镜像尽可能的小
+
+* 尽量使用 ENV 和 ARG 让人不改或者少改 Dockerfile 即可做构建对应版本的镜像
+* 尽量减少 Dockerfile 中单独的 RUN 命令的数量来减少镜像的层数.
+
+> Dockerfile 中指令 RUN,COPY,ADD 会创建新的镜像层，之后镜像层的操作不会影响上一层。因此即便 Dockerfile 中包含 RUN rm -rf xxx 镜像大小也不会减小.
+
+```shell
+RUN mkdir /data
+RUN touch /data/index.html
+```
+
+```shell
+RUN mkdir /data && touch /data/index.html
+```
+
+* 从适当的基础镜像开始。例如，如果您需要 JDK, 请考虑基于正式的 openjdk 镜像，而不是基于 ubuntu 镜像开始，再将 openjdk 的安装作为 Dockerfile 的一部分
+* 可以在官方 Dockerfile 里添加一些常见的排错命令，也可以将二进制及其依赖库添加到镜像中，参见为容器镜像定制安装 Linux 工具. 如
+
+```shell
+# 本示例仅作为示例演示,并没有实际意义
+# 系统环境 CentOS 7.5.1804,发现 centos:centos7.5.1804 没有 lsof 工具.添加一下
+# 首先在宿主机中安装 lsof 工具,并通过 ldd 查看其依赖库 `ldd $(which lsof)`
+# 在 centos:centos7.5.1804 镜像启动的容器中查找 lsof 的依赖库,可看到都是存在的.因此直接将二进制文件复制进入即可
+FROM centos:centos7.5.1804
+ADD lsof /usr/sbin/
+```
+
+* 使用多阶段构建。例如，您可以使用 maven 镜像构建 Java 应用程序，然后使用 tomcat 镜像并将构建的 Java 程序复制到正确的位置。这意味着您最终构建的镜像不包括构建所引入的所有库和依赖项。见如下示例
+
+```shell
+FROM golang:1.13.6-alpine3.10 as builder
+WORKDIR $GOPATH/src/demo
+COPY . $GOPATH/src/demo
+RUN CGO_ENABLED=0 GOOS=linux go build -o /demo
+EXPOSE 8080
+ENTRYPOINT ["./demo"]
+# 此时我们构建的镜像包括 go 的运行环境,相关源码或依赖文件,二进制可执行文件.镜像较大
+# 其中运行环境与源码或依赖对于容器的运行来说都是多余的.
+```
+
+```shell
+FROM golang:1.13.6-alpine3.10 as builder
+WORKDIR $GOPATH/src/demo
+COPY . $GOPATH/src/demo
+RUN CGO_ENABLED=0 GOOS=linux go build -o /demo
+
+FROM alpine:3.6
+COPY --from=builder /demo .
+EXPOSE 8080
+ENTRYPOINT ["./demo"]
+# 此时我们构建镜像仅包含二进制可执行文件.可以理解为 builder 构建完成后就将其丢弃了.镜像较小
+```
+
+* 尝试将共享的运行环境或依赖构建为独立的镜像，然后在此基础上构建其它镜像.Docker 只需要加载一次公共层，然后将它们缓存，可以更快的构建。如多个应用都需要自定义的 Tomcat 环境，可以将自定义 Tomcat 构建为单独镜像，而不需要每次构建应用时从最初始自定义 Tomcat 环境开始构建
+* 容器时区问题可以在构建镜像的时候安装 tzdate 包，然后声明变量 TZ 即可声明容器运行的时区，或者构建的时候复制宿主机的 /etc/localtime 或者运行的时候挂载宿主机的 /etc/localtime
+
+#### 在何处以及如何保留数据
+
+* 避免将数据存储在容器的可写层中，这会增加容器大小，且效率不如使用 volumes 或 bind 挂载
+* bind 挂载多用于开发或测试过程中。对于生产环境，请使用 volumes
+
+### 11. Dockerfile
+
+```shell
+docker build [OPTIONS] PATH | URL | -`
+```
+
+docker build 命令从 Dockerfile 及上下文构建镜像，构建的上下文是位于 PATH 或 URL 指定的位置的文件集合.PATH 是本地文件系统上的目录，URL 是一个 Git 仓库位置.
+
+上下文是递归处理的。因此 PATH 包括任何子目录，URL 包括仓库及其子模块.
+
+构建过程是 Docker 守护进程进行的。构建的第一件事就是将整个上下文目录及其子目录发送到守护进程中。因此，最好以空目录作为上下文，仅包含 Dockerfile 及 Dockerfile 构建过程中所需要的文件.
+
+#### .dockerignore
+
+通过在上下文中添加 .dockerignore 文件可以排除构建上下文中包含的文件或目录.
+
+.dockerignore 文件使用 # 作为注释，每行包含一个忽略的文件或目录，支持使用 *,?,** 作为通配符匹配。分别表示所有文件，单个字符，目录递归.
+
+在使用 * 忽略所有文件后，可以使用 ! 向上下文中添加被忽略的文件
+
+#### 指令详解
+
+##### ARG
+
+ARG 定义一个变量，用户也可以在构建时使用 ```--build-arg <varname>=<value>``` 传入构建参数。如果该参数没有在 Dockerfile 中定义，则输出警告信息.
+
+```shell
+ARG <name>[=<default value>]
+```
+
+##### FROM
+
+FROM 指定构建过程的基础镜像，一个有效的 Dockerfile 必须以 FROM 指令启动。它支持使用 ARG 定义的变量
+
+```shell
+FROM [--platform=<platform>] <image> [AS <name>]
+FROM [--platform=<platform>] <image>[:<tag>] [AS <name>]
+FROM [--platform=<platform>] <image>[@<digest>] [AS <name>]
+```
+
+##### RUN
+
+RUN 指令从当前镜像最新层执行命令并提交结果。生成的镜像层用于 Dockerfile 中下一步.
+
+```shell
+RUN COMMAND
+```
+
+##### LABEL
+
+LABEL 指令为镜像打标签
+
+```shell
+LABEL <key>=<value> <key>=<value> <key>=<value> ...
+```
+
+##### EXPOSE
+
+EXPOSE 指令暴露 Docker 容器监听的端口
+
+```shell
+EXPOSE <port> [<port>/<protocol>...]
+```
+
+##### ENV
+
+ENV 指令定义环境变量
+
+```shell
+ENV <key> <value>
+ENV <key>=<value> <key>=<value>
+```
+
+##### WORKDIR
+
+WORKDIR 指令定义工作目录，相当于 cd
+
+```shell
+WORKDIR /path/to/workdir
+```
+
+##### USER
+
+USER 指令指定运行镜像时使用的用户名及可选组
+
+```shell
+
+USER <user>[:<group>]
+USER <UID>[:<GID>]
+```
+
+##### VOLUME
+
+VOLUME 指定挂载点
+
+```shell
+VOLUME ["/path"]
+```
+
+##### ADD
+
+* ADD 指令支持拷贝压缩文件到镜像中，并自动解压
+* ADD 指令支持从源文件来自指定 URL, 构建容器时会自动下载到指定目录
+
+```shell
+ADD [--chown=<user>:<group>] <src>... <dest>
+ADD [--chown=<user>:<group>] ["<src>",... "<dest>"]
+```
+
+##### COPY
+
+```shell
+COPY [--chown=<user>:<group>] <src>... <dest>
+COPY [--chown=<user>:<group>] ["<src>",... "<dest>"]
+```
+
+##### ENTRYPOINT
+
+ENTRYPOINT 指令设置容器启动后要执行的命令。使用 --entrypoint 指令进行替换。它有两种形式
+
+--entrypoint 指令指定的命令会覆盖原有所有命令及参数
+
+```shell
+# exec 形式,是推荐的形式
+ENTRYPOINT ["executable", "param1", "param2"]
+
+# shell 形式. 容器启动后默认执行 `/bin/sh -c command param1 param2`,这种方式启动的容器会自动回收孤儿进程与僵尸进程
+ENTRYPOINT command param1 param2
+```
+
+##### CMD
+
+CMD 指令一般用来设置容器启动后执行命令的默认参数。如果是参数，则必须指定 ENTRYPOINT 指令。如果包含多个 CMD 指令，以最后一个为准.
+
+docker run [command] 时会覆盖 CMD 指令内容，对 ENTRYPOINT 无影响
+
+CMD 指令有 3 种形式
+
+```shell
+# exec 形式,是推荐的形式.该形式不会支持管道或变量替换.容器中 `executable` 进程 ID 为 1
+CMD ["executable","param1","param2"]
+
+# shell 形式. 容器会默认使用 `/bin/sh -c command param1 param2` 启动容器,这种方式启动的容器会自动回收孤儿进程与僵尸进程
+CMD command param1 param2
+
+# 作为 ENTRYPOINT 的默认参数,此时 ENTRYPOINT 必须使用 exec 形式
+CMD ["param1","param2"]
+```
+
+下表列出了不同 ENTRYPOINT 与 CMD 指令在容器启动时运行的命令:
+
+|                          | No ENTRYPOINT  | ENTRYPOINT exec_entry p_entry | ENTRYPOINT ["exec_entry", "p_entry"]       |
+| ------------------------ | -------------- | ----------------------------- | ------------------------------------------ |
+| No CMD                   | error          | /bin/sh -c exec_entry p_entry | exec_entry p_entry                         |
+| CMD ["exec_cmd p_cmd"]   | exec_cmd p_c   | /bin/sh -c exec_entry p_entry | exec_entry p_entry exec_cmd p_cmd          |
+| CMD ["p1_cmd", "p2_cmd"] | p1_cmd p2_cmd  | /bin/sh -c exec_entry p_entry | exec_entry p_entry p1_cmd p2_cmd           |
+| CMD exec_cmd p_cmd       | exec_cmd p_cmd | /bin/sh -c exec_entry p_entry | exec_entry p_entry /bin/sh -c exec_cmd_cmd |
+
 ## Kubernetes
 
 ### 1. Kubernetes Components
@@ -2236,6 +2524,13 @@ server_hello_done 通知客户端server_hello信息发送结束；
 
 ### 8. tcp和udp的区别
 
+* TCP 是面向连接的，通信之前需要进行三次握手，建立连接，通信结束后需要四次挥手，断开连接；UDP 是无连接的，即发送数据之前不需要建立连接
+* TCP 提供可靠的服务，以收到确认，超时重传，重新排序等机制提供数据可靠性；UDP 不保证数据的可靠性
+* TCP 面向字节流，实际上是 TCP 把数据看成一连串无结构的字节流；UDP 是面向报文的
+* 每一条 TCP 连接只能是点到点的；UDP 支持一对一，一对多，多对一和多对多的交互通信
+* TCP 的逻辑通信信道是全双工的可靠信道；UDP 则是不可靠信道
+* TCP 相对于 UDP 来说要求系统资源较多
+
 相同点
 UDP协议和TCP协议都是传输层协议
 
@@ -2376,6 +2671,39 @@ ss -ant | awk 'NR>1 {++s[$1]} END {for(k in s) print k,s[k]}'
 
 ### 17. TLS/SSL处于OSI哪一层
 
+### 18. 为什么需要三次握手，两次不行吗
+
+主要是为了防止已失效的请求报文段突然又传送到了服务端而产生连接的误判，造成服务端资源 / 时间的浪费.
+
+### 19. 为什么建立连接是三次握手，而关闭连接却是四次挥手呢
+
+* 建立连接
+因为服务端在 LISTEN 状态下，收到建立连接请求的 SYN 报文后，把 ACK 和 SYN 放在一个报文里发送给客户端.
+
+* 关闭连接
+当收到对方的 FIN 报文时，仅表示对方不再发送数据但还能接收收据，我们也未必把全部数据都发给了对方，所以我们可以立即关闭，也可以发送一些数据给对方后，再发送 FIN 报文给对方表示同意关闭连接。因此关闭连接的 ACK 和 FIN 一般会分开发送.
+
+### 20. 三次握手有什么缺陷
+
+伪造 IP 大量的向 server 发送 TCP 连接请求报文包，从而将 server 的半连接队列 (即 server 收到连接请求 SYN 之后将 client 加入半连接队列中) 占满，从而使得 server 拒绝其他正常的连接请求，即拒绝服务攻击.
+
+### 21. TCP 以什么方式提供数据可靠性
+
+* 将数据切分为最合适发送的数据块
+* 计时，收到后确认与超时重传。当 TCP 发出一个段后，它会启动一个定时器，等待目的端确认收到这个报文段。如果不能及时收到一个确认
+* 将重发这个报文
+* 首部与数据校验和确保数据在传输过程中的任何变化
+* 重新排序机制确保收到的数据以正确的顺序交给应用层
+* 丢弃重复数据
+* 流量控制，防止较快主机致使较慢主机的缓冲区溢出
+
+### 22. DNS 域名解析过程
+
+1. 应用首先检查缓存中有没有这个域名对应的解析过的 IP 地址。如果缓存中有，则返回缓存中的 IP 地址。否则进行下一步
+2. 查找本机的 host 文件，Linux 为 /etc/hosts,Windows 为 C:\Windows\System32\drivers\etc\hosts. 若查到，则返回。否则进行下一步
+3. 发送请求到 DNS 服务器 Linux 为 /etc/resolv.conf.DNS 服务器在收到客户机的请求后，首先检查 DNS 服务器的缓存，若查到请求的地址或名字，即向客户机发出应答信息。否则在数据库中查找，若查到请求的地址或名字，即向客户机发出应答信息
+4. 若没有找到，则将请求发给根域 DNS 服务器，并依序从根域查找顶级域，由顶级域查找二级域… 直至找到要解析的地址或名字，即向客户机所在网络的 DNS 服务器发出应答信息，DNS 服务器收到应答后现在缓存中存储，然后，将解析结果发给客户机
+
 ## Monitoring
 
 ### 1. prometheus组件
@@ -2424,6 +2752,219 @@ cacti绘图漂亮，查看以往数据非常方便，但是报警功能弱我觉
 nagios报警强大，定义好报警脚本想短信猫就短信猫，想post短信平台就post短信平台但是不适合查询以往数据，最大缺点不能像cacti那样一次行取多个数据进行记录、绘图，只能通过返回值确认是否故障。一般都和cacti同时使用
 
 ## Nginx/LVS
+
+### Nginx 支持的负载均衡算法有哪些？分别有什么应用场景
+
+* round robin 轮询
+依次将请求分配到各个后端服务器中，是 Nginx 默认的负载均衡方式。适用于后端服务器性能一致的情况.
+
+```conf
+upstream bakend {
+    server 172.16.1.2:8080;
+    server 172.16.1.3:8080;
+}
+```
+
+* weight 加权轮询
+加权轮询。根据权重比率分发请求到各个后端服务器中。使用 weight 指定权重。适用于后端服务器性能不一致的情况.
+
+```conf
+upstream bakend {
+    server 172.16.1.2:8080 weight=10;
+    server 172.16.1.3:8080 weight=20;
+}
+```
+
+* ip_hash 客户端 IP 哈希
+根据客户端 IP 地址的 hash 值将请求发送到后端服务器。可保证来自同一个客户端的请求被转发到固定的后端服务器中，可解决 session 问题.
+
+```conf
+upstream bakend {
+    ip_hash;
+    server 172.16.1.2:8080;
+    server 172.16.1.3:8080;
+}
+```
+
+* least_conn 最小连接数
+根据后端服务器的连接数进行分发，同时考虑后端服务器的权重.
+
+```conf
+upstream bakend {
+    least_conn;
+    server 172.16.1.2:8080;
+    server 172.16.1.3:8080;
+}
+```
+
+* least_time 最小平均响应时间
+根据后端服务器的平均响应时间及活动连接数进行分发，同时考虑后端服务器的权重.
+
+```conf
+upstream bakend {
+    least_time header | last_byte [inflight];
+    server 172.16.1.2:8080;
+    server 172.16.1.3:8080;
+}
+// 如果指定 `header`,则使用 `$upstream_header_time`(请求头的响应时间)作为响应时间的判断依据
+// 如果指定 `last_byte`,则使用 `$upstream_response_time`(请求响应时间)作为响应时间的判断依据.如果同时指定了 `inflight` 参数,则不完整的请求也会计算在内.
+```
+
+* hash key 自定义 hash 键轮询
+根据自定义 key 的值进行哈希从而选择后端服务器.key 可以包含文本，变量及其组合.
+
+```conf
+upstream bakend {
+    hash <key> [consistent];
+    server 172.16.1.2:8080;
+    server 172.16.1.3:8080;
+}
+// 如果指定了 `consistent` 参数,则将使用 ketama 一致性哈希算法.
+// 该算法可以确保向组中添加服务器或从组中删除时,只有很少的键被重新映射到与原来不同的服务器.有助于缓存服务器获得更高的缓存命中率
+```
+
+* random 完全随机
+nginx version >= 1.15.1
+
+将请求随机转发到后端服务器，同时考虑后端服务器权重.
+
+```conf
+upstream bakend {
+    random [two [method]];
+    server 172.16.1.2:8080;
+    server 172.16.1.3:8080;
+}
+// 可选的 `two` 参数随机选择两个后端服务器,然后使用指定的 `method` 选择一个后端服务器.默认方法是 `least_conn`,将请求传递给活动连接数最少的服务器
+```
+
+### Nginx location 匹配的顺序是什么
+
+Nginx location 按照如下优先级顺序进行匹配
+
+* 精确匹配: location = /path
+* 以某个常规字符串开头: location ^~ /prefix_path, 且 prefix_path 路径长者优先匹配
+* 以正则表达式进行匹配: location ~ regex_path 或 location ~* regex_path(~* 表示忽略大小写). 不管正则表达式如何进行锚定匹配，首先按照定义的顺序进行匹配。见如下示例
+
+```conf
+# 如下情况 uri=/image/.jpg 返回 /image
+location ~ /image {
+    return 200 '/image';
+}
+location ~ \.jpg {
+    return 200 '.jpg';
+}
+
+# 如下情况 uri=/image/.jpg 返回 .jpg
+location ~ \.jpg {
+    return 200 '.jpg';
+}
+location ~ /image {
+    return 200 '/image';
+}
+```
+
+* 通用匹配: location /path, 且 path 路径长者优先匹配
+
+### Nginx 调优
+
+#### 合理设置 Nginx worker 进程数，并绑定到不同 CPU
+
+一般情况下，应将 worker 进程数设置为 CPU 核数，或设置为 auto 根据系统 CPU 自动配置.
+
+可以通过 worker_cpu_affinity 将 Nginx worker 进程绑定到不同的 CPU 上，避免多个进程竞争同一个 CPU 资源，充分利用 CPU 多核资源.
+
+```conf
+worker_processes  4;
+worker_cpu_affinity 0001 0010 0100 1000;
+```
+
+#### 使用 epoll 事件驱动模型，合理设置单个进程的最大连接数及最大打开文件数量
+
+> 进程最大连接数受系统最大打开文件数限制，因此需要使用 ulimit 设置打开的文件数。或在 /etc/security/limits.conf, /etc/security/limits.d/nginx.conf 进行配置。配置如下
+
+```conf
+ulimit -n $max_open_files # 设置系统最大打开文件数
+cat /etc/security/limits.d/nginx.conf
+*       soft    nproc   131072
+*       hard    nproc   131072
+*       soft    nofile  131072
+*       hard    nofile  131072
+```
+
+```conf
+events {
+    use epoll;
+    worker_connections 15000;
+    worker_rlimit_nofile 65535;
+}
+```
+
+#### 优化服务器域名的散列表大小
+
+如果在 server_name 中配置了长域名，可能会出现如下错误.
+
+```conf
+nginx: [emerg] could not build the server_names_hash, you should increase server_names_hash_bucket_size: 64
+nginx: configuration file /usr/local/nginx/conf/nginx.conf test failed
+```
+
+此时需要对 http 配置段 server_names_hash_bucket_size 进行调整，如下:
+
+```conf
+http {
+    # ...
+    server_names_hash_bucket_size  512;
+}
+```
+
+#### 开启高效文件传输模式，开启或 gzip 压缩
+
+* http 配置段 sendfile 参数用于开启文件高效传输模式
+* http 配置段 gzip 参数可用于开启压缩功能
+
+```conf
+http {
+    gzip  on;
+    sendfile on;
+}
+```
+
+#### 优化 Nginx 连接超时时间
+
+* http 配置段 keepalive_timeout 参数用于设置客户端连接保持会话的超时时间，超过这个时间服务器会关闭该连接
+* http 配置段 client_header_timeout 参数用于设置读取客户端请求头数据的超时时间。如果读取请求头超时，服务器将返回 “Request time out (408)” 错误.
+* http 配置段 client_body_timeout 参数用于设置读取客户端请求主体数据的超时时间。如果读取请求体超时，服务器将返回 “Request time out (408)” 错误.
+* http 配置段 send_timeout 参数用于指定响应客户端的超时时间，如果超时，Nginx 将会关闭连接.
+
+```conf
+http {
+    # 在大并发时,需要合理调小如下参数
+    keepalive_timeout  65;
+    client_header_timeout 15;
+    client_body_timeout 15;
+    send_timeout 25;
+}
+```
+
+#### 限制上传文件大小
+
+* http 配置段 send_timeout 参数用于设置客户端最大请求体大小。如果超过出，客户端会收到 413 错误，即请求体过大
+
+```conf
+http {
+    client_max_body_size 8m;    # 设置客户端最大请求体大小为8M
+}
+```
+
+#### 合理配置 Nginx expires 缓存
+
+* expires 参数用于设置用户访问内容的缓存时间。用户会在本地浏览器中缓存这些内容，直到超过缓存时间。多用于配置静态内容
+
+```conf
+location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|js|css)$ {
+    expires     3650d;
+}
+```
 
 ### 1. nginx 优化
 
