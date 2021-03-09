@@ -214,7 +214,7 @@ To see every process on the system using standard syntax:
           ps -ef
           ps -eF
           ps -ely
-          
+
 ps -ef
 UID          PID    PPID  C STIME TTY          TIME CMD
 root           1       0  0 Feb10 ?        00:00:51 /sbin/init
@@ -587,6 +587,10 @@ find {{dir}}/ -type f -mtime +7 -exec rm -f {} \;
 # 7 天之内
 find {{dir}}/ -type f -mtime -7 -exec rm -f {} \;
 
+# 把 /data 目录及其子目录下所有以扩展名 .txt 结尾的文件中包含 magedu 的字符串全部替换为 magestudy
+# {} 表示找到的文件
+find /data -type f -name "*.txt" -exec sed -i s'@magedu@magestudy@' {} \;
+
 ```
 
 #### 21. ulimit
@@ -622,6 +626,39 @@ find {{dir}}/ -type f -mtime -7 -exec rm -f {} \;
     tcpdump -r dumpfile.pcap
 ```
 
+```shell
+-i <DEV>: 抓取指定网络接口的数据包
+-c <COUNT>: 抓取多少个数据包
+-w <FILE>: 抓取数据包保存在文件中,而不是直接输出
+
+expression: tcpdump 的表达式
+
+type: 指定抓取类型.host,net,port,portrange,默认host
+dir: 指定抓取传输方向.src,dst,src and dst,
+proto: 指定抓取数据包协议.ip,tcp,udp
+
+tcpdump [src | dst]host <HOST>: 指定主机
+tcpdump host <HOST1> and <HOST2>: 抓取 HOST1 和 HOST2之间的数据包
+tcpdump [tcp | udp] port <PORT>: 抓取执行端口数据包
+tcpdump host <HOST> and port <PORT>: 抓取主机和端口数据包
+tcpdump net <NET>: 抓取网络数据包
+```
+
+#### 23. sar
+
+```shell
+sar [m [n]]: 每隔 m 秒报告一次,共报告 n 次,默认是 CPU 状态信息
+-b 报告 IO 和传输速率
+-f [filename] 从历史文件中报告数据
+-n [DEV,IP,TCP,UDP] 报告网络状态信息
+-o [filename] 将统计结果保存到二进制文件中
+-P [0..ALL] 查看 CPU 相关信息
+-r 报告内存利用率相关信息
+-S 报告 Swarp 利用率相关信息
+-u 报告 CPU 利用率状态信息
+-v 报告 inode 相关信息
+```
+
 ### 1. 什么是并发、并行、阻塞、异步、同步
 
 * 并发/并行: CPU在执行多个任务时的方式，并发表示同一段时间里面有多个进程在同一CPU执行，在极短的时间互相切换使人不会发觉。并行只会出现在多个CPU的情况下，表示同一时刻之内有多个进程在执行
@@ -652,12 +689,18 @@ $#
 添加到Shell的参数个数
 $0
 Shell本身的文件名
+${#str}
+str 变量字符长度
 $1～$n
 添加到Shell的各参数值。$1是第1参数、$2是第2参数…。
 # 在脚本中添加set -x可以进行每一行的调试
 ```
 
 ### 3. 怎么防止个人history操作泄露问题
+
+* ```history -c``` 清空当前命令历史, ```history -w``` 将已经清空的命令历史写入到命令历史文件 ```~/.bash_history``` 中 (或直接清空该文件), 下次登录边不再有命令历史
+* ```unset HISTFILE```
+* ```export HISTIGNORE=*```
 
 ### 4. 怎么解决一些不小心的命令操作
 
@@ -729,7 +772,18 @@ nginx   4000236 systemd-timesync   17u     sock    0,8      0t0 11159476 protoco
 
 ### 18. kill和kill -9的区别，有没有更优雅的方式kill进程
 
-### 19. buffer和cache的区别
+### 19. buffer和cache的区别,如何清理 cache 缓存
+
+* buffer 是即将要被写入磁盘的，buffer 能够使分散的写操作集中进行，减少磁盘碎片和硬盘的反复寻道，从而提高系统性能
+* cache 是被从磁盘中读出来的.cached 是把读取过的数据保存起来，重新读取时若命中就不要去读硬盘，若没有命中就读硬盘
+
+```shell
+# 清理缓存
+sync
+echo 1 > /proc/sys/vm/drop_caches  # 释放页面缓存
+echo 2 > /proc/sys/vm/drop_caches  # 释放索引,inodes 节点缓存,可能会降低磁盘索引效率
+echo 3 > /proc/sys/vm/drop_caches  # 释放页面缓存,索引,inode 缓存
+```
 
 ### 20. Shell脚本中的return和exit作用及return的取值范围
 
@@ -756,6 +810,169 @@ touch test{1..99}
 ### 29. 你认为什么是SRE
 
 ### 30. awk 打印第 10 行
+
+### 31. Bash 中两个数做运算的几种方式
+
+```shell
+sum=$[ ${v1} + ${v2} ]
+(( sum=${v1} + ${v2} ))
+let sum=${v1}+${v2}     # 这里运算符两端必须没有空格
+`expr ${v1} + ${v2}`    # 这里运算符号两端必须要有空格
+```
+
+### 32. read 命令从管道中读取字节流
+
+```shell
+echo "sinaops" | read a ; echo $a
+echo "sinaops" | while read a ; do echo $a ; done
+```
+
+### 33. 统计域名出现次数 "http://hi.baidu.com/browse/"
+
+```shell
+# 与统计 IP 访问次数基本一致
+awk -F '/' '{num[$3]++}END{for (name in num){print  name,num[name]}}' file
+```
+
+### 34. 打印奇数/偶数行
+
+```shell
+# n 表示读取模式空间的下一行; N 表示追加下一行到模式空间
+sed -n 'p;n' file # 奇数行
+sed -n 'n;p' file # 偶数行
+# 奇数行和偶数行合并
+sed 'N;s/\n/ /g' file
+
+# 奇数行与偶数行交换
+sed -r 'N;s@(.*)\n(.*)@\2\n\1@g' file
+```
+
+### 35. 文件中两列数据,分别为 ip,status_code.统计状态码为 200 中,出现次数最多的 IP
+
+```shell
+awk '/200$/{ip_num[$1]++}END{for(ip in ip_num){print ip,ip_num[ip]}}' ip_code | awk '/NR==1/{print $1,"出现次数最多,为",$2}' | sort -nrk 2 | awk '{if (FNR==1){print $1,"出现次数最多,为",$2}}'
+```
+
+### 36. 进程的有效用户与实际用户
+
+Linux 系统中某个可执行文件属于 root 并且有 setid, 当一个普通用户 mike 运行这个程序时，产生的进程的有效用户和实际用户分别是 root 和 mike
+
+### 37. fork() 创建进程
+
+```c
+/*
+* 在父进程中,fork 返回新创建子进程的进程 ID
+* 在子进程中,fork 返回 0
+* 如果出现错误,fork 返回一个负值
+*/
+
+
+
+int main()
+{
+    fork() || fork();
+    sleep(100);
+    retrun 0;
+}
+/*
+* 共创建 3 个
+* main() -> fork() -> fork()
+*/
+
+int main()
+{
+    fork() && fork();
+    sleep(100);
+    retrun 0;
+}
+/*
+* 共创建 3 个
+* main() -> fork()
+*        -> fork()
+*/
+int main()
+{
+    fork() && fork() || fork();
+    sleep(100);
+    return 0;
+}
+/*
+* 共创建 5 个
+* main() -> fork() -> fork()
+*        -> fork() -> fork()
+*/
+
+int main()
+{
+    fork(); // 新创建 1 个
+    fork() && fork() || fork(); // 新创建 (1+1)*2+(1+1)*2 = 8 个
+    fork(); // 新创建 1+8+1=10 个
+    sleep(100);
+    return 0;
+}
+// 共创建 20 个进程
+```
+
+### 38. ln -s 与 mv 对某文件操作时，对 inode 和 block 有什么影响
+
+```shell
+# 理解 blocks 为磁盘存储块, inode 为指向该存储块的地址
+ln -s afile bfile
+# 原始文件不变
+# 新文件 inode 与原始文件不同,且 block 为 0
+# 原因: 创建符号链接,系统为符号链接分配 inode,符号链接不存储数据,只是作为引用,故 block 为 0
+
+mv afile bfile
+# 原始文件不存在
+# 新文件与原始文件 inode 与 block 相同
+# 原因: 修改文件名后,系统只是将文件名做改变,inode 与存储 block 不变
+
+ln afile bfile
+# 原始文件不变
+# 新文件 inode 和 block 与原始文件相同
+# 原因: 创建硬链接,相当于为原始文件指定一个别名,inode 与存储 block 不变,这两个文件名指向系统底层存储是一样的
+
+cp afile bfile
+# 原始文件不变
+# 新文件 block 与 原始文件相同,inode 不同
+# 原因: 拷贝文件,相当于对系统底层存储做拷贝,系统为新文件重新分配 inode,文件内容一直,block不变
+```
+
+### 39. top 页面含义
+
+当前时间及运行时长, 登录用户数, 平均负载
+任务数: 总数,运行中,休眠中,停止,僵尸进程
+CPU占比: 用户空间, 内核空间,, 空闲进程,等待进程
+内存: 总物理内存,使用,剩余,buffer 缓冲
+Swap: 总,使用,剩余,cache 缓存
+
+进程ID 用户 优先级 nice值 虚拟内存 物理内存 共享内存 进程状态 CPU 内存 运行时长 命令
+
+### 40. kill 信号
+
+```shell
+1 HUP 终端断线
+2 INT 中断,同 Ctrl + C
+3 QUIT 退出
+9 KILL 强制终止
+15 TERM 优雅的终止
+18 CONT 继续(bg/fg命令)
+19 STOP 暂停,同 Ctrl + Z
+```
+
+### 41. 文件描述符
+
+文件描述符是一个非负的索引值，指向内核中的” 文件记录表”.
+
+* 当打开一个现存文件或创建一个新文件时，内核就向进程返回一个文件描述符
+* 当需要读写文件时，文件描述符可作为参数传递给相应的函数
+* Linux 下所有对设备和文件的操作都使用文件描述符来进行
+
+常见文件描述符如下
+
+* 0: 表示标准输入，对应宏为: STDIN_FILENO, 函数 scanf () 使用的是标准输入
+* 1: 表示标准输出，对应宏为: STDOUT_FILENO, 函数 printf () 使用的是标准输出
+* 2: 表示标准出错处理，对应的宏为: STDERR_NO
 
 ## 安全
 
@@ -2484,6 +2701,169 @@ A：（1+1）/1=2 B：（1+2）/2=3/2 C：（1+3）/3=4/3 就把请求交给得�
 4. 当Slave服务器的IO线程获取到Master服务器上IO线程发送的日志内容、日志文件及位置点后，会将binlog日志内容依次写到Slave端自身的Relay Log（即中继日志）文件（Mysql-relay-bin.xxx）的最末端，并将新的binlog文件名和位置记录到master-info文件中，以便下一次读取master端新binlog日志时能告诉Master服务器从新binlog日志的指定文件及位置开始读取新的binlog日志内容
 5. Slave服务器端的SQL线程会实时检测本地Relay Log 中IO线程新增的日志内容，然后及时把Relay LOG 文件中的内容解析成sql语句，并在自身Slave服务器上按解析SQL语句的位置顺序执行应用这样sql语句，并在relay-log.info中记录当前应用中继日志的文件名和位置点
 
+#### 3. MySQL 配置文件
+
+配置文件读取顺序如下: /etc/my.cnf -> /etc/mysql/my.cnf -> /usr/local/mysql/etc/my.cnf -> ~/.my.cnf. 后面的配置会覆盖前面的配置。如果忘记，可通过 mysql --help | grep my.cnf 进行查看
+
+#### 4. 日志文件
+
+* 错误日志：记录 MySQL 启动，运行，关闭过程中发生的错误。可通过 ```show variables like '%log_error%'```; 查看错误日志文件位置.
+* 慢查询日志：记录查询时间超过 ```long_query_time``` 参数值 (默认为 10) 的所有 SQL 语句
+  * ```slow_query_log```: 设置是否开启慢查询日志
+  * ```slow_query_log_file```: 慢查询日志文件
+* 二进制日志 (binlog): 记录对 MySQL 数据库执行更改的所有操作，不包括 ```SELECT``` 和 ```SHOW``` 之类的操作。可用于复制备份恢复数据
+  * ```log_bin```: 是否记录 binlog
+  * ```log_bin_index```: binlog 索引
+  * ```binlog_format```: 记录二进制日志的格式. ```STATEMENT``` 记录逻辑 SQL 语句.```ROW``` 格式记录表行更改情况 (在执行 UPDATE 时，数据与原来一致，则不不会执行).```MIXED``` 默认使用 ```STATEMENT``` 格式，一些情况使用 ```ROW``` 格式.
+  * ```max_binlog_size```: binlog 文件最大大小，若超过该值，则产生新的 binlog 文件，并使索引加 1.
+  * ```binlog_cache_size```: 未提交的 binlog 会被记录到缓存中，该选项配置会话缓存大小，默认为 32 KB.
+  * ```sync_binlog```: 表示缓冲数据写入磁盘的方式。默认为 0.1 表示同步写磁盘来写二进制日志.
+
+#### 5. 为什么 MySQL 数据库索引选择使用 B+ 树
+
+* B+ 树中父节点元素都出现在子节点，所有叶子节点包含了全量元素信息，每个叶子节点都带有指向下一个节点的指针，形成了一个有序链表。相比于 B 树，更易于范围查找
+* B 树中的每个节点带有卫星数据 (所谓卫星数据，指的是索引元素指向的数据记录，比如数据库中的一行). 而 B+ 树中只有叶子节点带有卫星数据 (中间节点仅仅是索引), 因此相同的磁盘页可以容纳更多的节点元素。这就意味着，相同数据量的情况下，B+ 树比 B 树更加” 矮胖”, 查询 IO 次数更少.
+
+#### 6. 聚簇索引与非聚簇索引
+
+* 聚簇索引
+聚簇索引按照每张表的主键构造一棵 B+ 树，叶子节点存放整张表的行记录数据。每个数据页都通过一个双向链表来进行链接.
+
+聚簇索引对于主键的排序查找和范围查找非常快。叶子节点就是用户索要查询的数据.
+
+* 非聚簇索引
+非聚簇索引中叶子节点不包含行记录的全部数据，而是带有指向数据的指针.
+
+当通过非聚簇索引查找数据时，InnoDB 存储引擎会遍历非聚簇索引并通过叶级别的指针获得指向主键索引的主键，然后再通过主键找到一个完整的行记录.
+
+#### 7. 如何定位锁问题
+
+查看命令 ```show engine innodb status``` 的输出，并通过查询 ```information_schema``` 库中三个有关锁的表进行查看锁的详情
+
+* ```innodb_trx```: 当前运行的所有事务
+* ```innodb_locks```: 当前出现的锁
+* ```innodb_lock_waits```: 锁等待的对应关系
+
+#### 8. MySQL 事务有哪些特性
+
+* 原子性 (atomicity): 事务是一个不可分割的操作，要么全部正确执行，要么全部不执行
+* 一致性 (consistency): 事务把数据从一种一致性状态转化为另一种一致性状态，事务开始前后，数据库完整性没有被破坏
+* 隔离性 (isolation): 要求每个读写事务之间是分开的，在提交事务之前对其它事务是不可见的
+* 持久性 (durability): 事务一旦提交，结果是永久性的
+
+#### 9. 事务的隔离级别
+
+* 读未提交：能够读取到未提交的数据，脏读
+* 读已提交：只能读取到已经提交的数据，解决脏读问题，产生不可重读问题。两次同样的查询，可能得到不一样的结果.
+* 可重读 (默认): 解决不可重读问题，但仍然存在幻读，某个事务在读取范围内记录时，另一个事务又在该范围内插入新纪录，之前事务再次读取该范围的记录时，会产生幻行.
+* 串行化：强制事务串行执行，避免幻读问题
+
+#### 10. MySQL 复制过程及原理
+
+过程:
+
+* 主库把数据更改记录在二进制日志中
+* 备库将主库上的日志复制到自己的中继日志中
+* 备库读取中继日志中的事件，并将其重放到备库上
+
+原理:
+
+* 主库记录二进制日志，在每次提交事务完成数据更新之前，主库将数据更新的事件记录到二进制日志中.
+* 备库将主库的二进制日志复制到本地中继日志中。备库会启动一个 I/O 线程，并使用该线程与主库建立连接，读取二进制日志中的事件，复制到备库的本地中继日志中。如果该线程追上了主库，则进入睡眠状态，直到有信号通知.
+* 备库的 SQL 线程从中继日志中读取事件并在备库中执行，直到 SQL 线程追上 I/O 线程，从而实现备库的更新
+
+#### 11. 如何判断 MySQL 是否同步，该如何使其同步
+
+使用 ```show slave status\G``` 查看同步信息
+
+```shell
+Slave_IO_State:
+Slave_IO_Running:
+Slave_SQL_Running:
+Slave_SQL_Running_State:
+Last_IO_Errno:
+Last_IO_Error:
+Last_SQL_Errno:
+Last_SQL_Error:
+Read_Master_Log_Pos: 256364229
+Exec_Master_Log_Pos: 256364229
+Seconds_Behind_Master: 0
+SQL_Delay: 0
+```
+
+```shell
+# 主库配置
+log_bin = mysql-bin # 开启二进制日志并设置二进制文件前缀名
+server_id = 10 # 唯一服务器ID,可自行设置
+sync_binlog = 1 # MySQL 每次在提交事务之前会将二进制日志同步到磁盘上,保证服务器在崩溃时不丢失事
+innodb_flush_logs_at_trx_commit  #  每次提交事务时会记录日志,开启会对性能产生影响,但是提升准确性
+
+# 从库配置
+relay_log = /path/to/relay_log/relay-bin
+log_slave_updates = 1 # 允许从节点在二进制日志中记录更新事务
+log_bin = mysql-bin
+skip_slave_start # 阻止从库在崩溃后自动启动复制
+read_only = 1
+
+# 从库执行
+CHANGE MASTER TO MASTER_HOST='server1',
+    MASTER_USER='repl',
+    MASTER_PASSWORD='password',
+    MASTER_LOG_FILE='mysql-bin.000001',
+    MASTER_LOG_POS=0;
+```
+
+#### 12. MySQL 如何减少主从复制延迟
+
+* 慢 SQL 语句过多，在开发或架构上做优化，减少慢 SQL 语句
+* 主从复制单线程，主库写入过快。主库写，安全性较高，建议开启 ```sync_binlog=1```,```innodb_flush_log_at_trx_commit=1``` 之类的设置，而从库可以不开启
+* master 负载过大。架构的前端要加 buffer 及缓存层，如 redis
+* slave 负载过大，使用多台 slave 来分摊读请求。再从这些 slave 中取一台专用的服务器
+* 网络延迟
+* 从库硬件性能较差
+
+#### 13. MySQL 重置密码
+
+```shell
+mysqld --skip-grant-tables --skip-networking
+mysql> use mysql;
+mysql> update user set password=password("new_password") where user="root";
+mysql> flush privileges;
+mysqld --正常启动测试
+```
+
+#### 14. SQL 优化
+
+* 通过 show status like 'Com_%' 查看各种语句执行的次数，其中 Slow_queries 表示慢查询次数
+* 通过 show processlist 命令查看当前 MySQL 正在进行的线程状态，是否锁表等
+* 通过 explain 分析低效 SQL 的执行计划
+  * select_type 表示选择的类型
+  * type 表示 MySQL 的访问方式，all (全表扫描),index (索引),range (索引范围),
+  * possible_key 表示查询时可能用到的索引
+  * key 表示实际用到的索引
+  * key_len 表示用到索引字段的长度
+  * rows: 扫描行的数量
+
+#### 15. 常用 SQL 优化
+
+##### 1. 大量插入数据
+
+* 使用多个值的 insert 语句，避免连接关闭等消耗
+* 使用 insert delayed 获取更高速度
+* 使用 load data infile 代替 insert
+* 将索引文件和数据文件放在不通磁盘上，增大数据写入速率
+
+##### 2. 创建合适的索引，并按照索引顺序进行查询
+
+* 考虑在 where 及 order by 列上创建索引
+* 避免在 where 字句中进行空值判断，或使用！=,<>,in,or,not in,like ‘% xxx’, 函数 / 计算，否则将导致放弃使用索引而进行全表扫描
+
+#### 16. drop,delete,truncate 的区别
+
+* drop 删除表有关的一切 (数据，结构，约束，键), 为 DDL 操作
+* delete 删除表中所有数据，但每次从表中删除一行，较慢，可增加 where 语句
+* truncate 一次性清空表数据，保留表结构，约束，键
+
 ### Redis
 
 #### 1. Redis 基本数据类型
@@ -2505,7 +2885,89 @@ A：（1+1）/1=2 B：（1+2）/2=3/2 C：（1+3）/3=4/3 就把请求交给得�
 当主服务器的BGSAVE命令执行完毕，主服务器将生成的RDB文件发送给从服务器，从服务器接收并加载这个RDB文件，将自己的数据库状态更新至主服务器执行BGSAVE命令是的数据库状态。
 主服务器将记录在缓冲区里面的所有写命令发送给从服务器，从服务器执行这些写命令，将自己的数据库状态更新至主服务器当前所处的状态
 
-### 3. Redis持久化存储机制
+#### 3. Redis持久化存储机制
+
+Redis 数据保存在内存中，当进程重新启动时，释放内存并重新分配，数据会丢失。持久化就是将 Redis 内存中的数据保存在磁盘上，在进程重新启动时，可以从磁盘加载数据，保证数据持久性
+
+#### 4. Redis 为什么这么快
+
+* Redis 中的数据保存在内存中，绝大多数请求都是纯粹的内存操作，非常快速
+* 使用多路 I/O 复用模型，非阻塞 IO
+* 采用单线程，避免不必要的上下文切换和竞争，也不存在多进程或多线程中各种锁的问题
+
+#### 5. 哨兵机制实现原理
+
+##### 三个定时任务
+
+1. 每隔 10 秒，Sentinel 节点向主 / 从节点发送 info 命令获取最新拓补结构
+2. 每隔 2 秒，Sentinel 节点向 Redis 数据节点 __sentinel__:hello 频道发送该 Sentinel 节点对于主节点的判断及当前 Sentinel 节点信息。每个 Sentinel 也会订阅该频道，了解其它 Sentinel 以及对主节点的判断 (主要用于发现新的 Sentinel 节点，并交换主节点状态，作为客观下线及领导者选举的依据)
+3. 每隔 1 秒，Sentinel 向主从节点，Sentinel 节点发送 ping 命令做心跳检测 (当节点不可达时做主观下线及领导者选举的依据)
+
+##### 故障恢复过程
+
+* 主观下线
+
+由定时任务 3 完成，当节点不可达时，认为该节点下线
+
+* 客观下线
+
+当 Sentinel 主观下线节点是主节点时，该节点通过 sentinel is-master-down-by-addr 向其他节点询问对该主节点的判断，当主观下线超过 ```<quorum>``` 时，作出客观下线
+
+* 领导者选举
+
+  * 主观下线后，该节点通过 sentinel is-master-down-by-addr 命令，要求将自己设置为领导者.
+  * 收到该命令的 Sentinel 节点，如果没有同意过其他 Sentinel 节点的命令，则同意，否则拒绝
+  * 当 Sentinel 节点的票数大于等于 max(quorum, num(sentinels)/2 + 1) 它将成为领导者
+
+* 故障转移 领导者选举选出的节点负责故障转移
+
+  * 在从节点中选出一个节点执行 slaveof no one 让其成为新主节点
+  * 向剩余节点发送命令，让他们成为新主节点的从节点
+  * 将原来主节点更新为从节点，并保持关注，恢复后进程复制
+
+> 设置 slave 节点资源池，实时掌握从节点状态，可保证从节点高可用
+
+#### 6. 集群原理
+
+Redis 集群采用虚拟槽分区的，所有的键根据哈希函数映射到 0-16383 槽内.
+
+缺点:
+
+* 批量操作受限制
+* 复制结构只支持一层
+
+##### 集群搭建
+
+* 准备节点
+
+```shell
+cluster-enabled yes # 开启集群模式
+cluster-config-file "" # 指定集群配置文件
+```
+
+* 节点握手，```cluster meet <redisIP> <redisPort>```
+* 分配槽，配置主从.```cluster addlots <lot>```, ```cluster replicate <redisRunId>```
+
+##### 集群节点通信
+
+Gossip, 流言协议
+
+ping,pong,meet,fail
+
+#### 7. Redis 安全策略
+
+* 简单的密码验证，通过 requirepass 配置
+* 对危险命令重命名，通过 rename-command 设置，危险命令包括
+  * keys: 如果键值较多，存在阻塞 Redis 的可能性
+  * flushall/flushdb: 数据全部被清除
+  * save: 如果键值较多，存在阻塞 Redis 的可能性
+  * debug: 例如 debug reload 会重启 Redis
+  * config: config 包含 redis 配置相关命令，应该交给管理员使用
+  * shutdown: 停止 Redis
+* bind: 选择指定网卡做绑定，而不要绑定 0.0.0.0
+* 修改默认端口
+* 尽量不要使用 root 用户运行
+* 定期备份数据
 
 ## 中间件
 
